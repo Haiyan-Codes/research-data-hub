@@ -4278,6 +4278,7 @@ section.page.active{display:block}
   <div class="nav-tabs" id="nav-tabs">
     <button data-p="home" class="active">🏠 首页</button>
     <button data-p="search" class="">🔍 文献/数据集检索</button>
+    <button data-p="agent" class="">🤖 智能分析</button>
     <button data-p="analyze" class="">📊 数据统计分析</button>
     <button data-p="library">⭐ 我的收藏</button>
     <button data-p="about">ℹ️ 关于</button>
@@ -4300,8 +4301,8 @@ section.page.active{display:block}
     </div>
     <div class="actions">
       <button class="btn primary" onclick="go('search')">🔍 立即检索文献</button>
-      <button class="btn teal" onclick="go('analyze')">📊 上传数据做分析</button>
-      <button class="btn" onclick="window.open('https://pubmed.ncbi.nlm.nih.gov/','_blank')">PubMed 官网 ↗</button>
+      <button class="btn teal" onclick="go('agent')">🤖 智能分析助手</button>
+      <button class="btn" onclick="go('analyze')">📊 上传数据做分析</button>
     </div>
   </div>
 
@@ -4379,7 +4380,8 @@ section.page.active{display:block}
       </div>
       <div class="rs-body" id="rs-files-body">
         <div class="rs-empty">未加载任何数据文件<br><br>
-          <button class="rs-btn primary" onclick="document.getElementById('f2').click()">📂 上传数据文件</button><br><br>
+          <button class="rs-btn primary" onclick="document.getElementById('f2').click()">📂 上传数据文件</button>
+          <button class="rs-btn" style="margin-top:6px" onclick="loadSampleData()">📊 加载示例数据</button><br><br>
           <span style="font-size:11px">支持 CSV / TSV / RDS / XLSX</span>
         </div>
       </div>
@@ -4409,12 +4411,13 @@ section.page.active{display:block}
         <textarea class="rs-code" id="rs-code" spellcheck="false" placeholder="# 在这里写代码，数据加载后可用变量：
 # Python: DF (DataFrame), DICT (字典), META (元信息)
 # R:      .df (data.frame)
-# 快捷：Ctrl+Enter 运行全部，选中后点「运行选中」">import pandas as pd
-import numpy as np
-
-print('数据维度:', DF.shape)
-print('列名:', list(DF.columns))
-print(DF.describe())</textarea>
+# 快捷：Ctrl+Enter 运行全部，选中后点「运行选中」"># 默认 Python 代码：点击上方 📉回归/📊作图/📋统计 可加载更多片段
+if 'DF' not in globals() or DF is None:
+    print('⚠ DF 不存在，请先在左侧上传 CSV 或点击「📊 加载示例数据」')
+else:
+    print('数据维度:', DF.shape)
+    print('列名:', list(DF.columns))
+    print(DF.describe(include='all'))</textarea>
       </div>
 
       <div class="rs-panel rs-console" style="margin-top:8px">
@@ -4452,6 +4455,68 @@ print(DF.describe())</textarea>
     </div>
   </div>
 </section>
+
+<!-- ============ PAGE: AGENT ============ -->
+<section id="p-agent" class="page">
+  <div class="page-title"><h2>🤖 智能分析助手</h2><div class="meta">输入关键词 → 自动爬取文献+数据集 → 计量分析 → 生成报告</div></div>
+
+  <div class="toolbar">
+    <input class="input wide" id="agent-q" placeholder="输入研究关键词，例如：adolescent depression / 老年认知衰退 / suicide prevention cohort">
+    <select id="agent-year"><option value="">所有年份</option><option value="2024">近 2 年</option><option value="2020">近 5 年</option><option value="2015">近 10 年</option></select>
+    <button class="btn primary" onclick="runAgentAnalysis()">🚀 启动智能分析</button>
+  </div>
+
+  <div class="agent-flow">
+    <div class="agent-step" id="step-1"><span class="num">1</span><div>文献爬取</div></div>
+    <div class="agent-step" id="step-2"><span class="num">2</span><div>数据集爬取</div></div>
+    <div class="agent-step" id="step-3"><span class="num">3</span><div>文献计量</div></div>
+    <div class="agent-step" id="step-4"><span class="num">4</span><div>关联数据集</div></div>
+    <div class="agent-step" id="step-5"><span class="num">5</span><div>生成报告</div></div>
+  </div>
+
+  <div id="agent-status" class="empty-tip">👆 输入关键词后启动智能分析。系统会从 PubMed/Crossref/Semantic Scholar 爬取文献、从 Zenodo 爬取数据集，自动完成文献计量分析并生成结构化报告。</div>
+
+  <div id="agent-report" style="display:none">
+    <div class="grid-2" style="gap:14px">
+      <div class="agent-card"><h3>📊 文献年份分布</h3><div id="agent-year-chart" class="bar-chart"></div></div>
+      <div class="agent-card"><h3>👥 Top 作者</h3><div id="agent-author-chart" class="bar-chart"></div></div>
+      <div class="agent-card"><h3>📚 Top 期刊</h3><div id="agent-journal-chart" class="bar-chart"></div></div>
+      <div class="agent-card"><h3>🔗 高频关键词</h3><div id="agent-keyword-chart" class="bar-chart"></div></div>
+    </div>
+    <div class="agent-card"><h3>🏆 高被引论文 Top 10</h3><div id="agent-top-papers"></div></div>
+    <div class="agent-card"><h3>💾 关联数据集</h3><div id="agent-datasets"></div></div>
+    <div class="agent-card"><h3>📝 综合报告（Markdown）</h3>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn sm" onclick="downloadAgentReport()">📥 下载 Markdown</button>
+        <button class="btn sm" onclick="saveAgentReport()">⭐ 收藏报告</button>
+        <button class="btn sm" onclick="loadAgentDataToAnalyze()">📊 加载文献数据到分析台</button>
+      </div>
+      <pre id="agent-md" style="background:#f7f7f7;padding:12px;border-radius:3px;white-space:pre-wrap;max-height:500px;overflow:auto;font-size:12px;line-height:1.5"></pre>
+    </div>
+  </div>
+</section>
+
+<style>
+.agent-flow{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap}
+.agent-step{flex:1;min-width:120px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);transition:all .3s}
+.agent-step .num{display:inline-block;width:22px;height:22px;line-height:22px;border-radius:50%;background:#ddd;color:#333;margin-right:6px;font-weight:bold}
+.agent-step.active{border-color:var(--accent);background:#eef5ff;color:var(--accent)}
+.agent-step.active .num{background:var(--accent);color:#fff}
+.agent-step.done{border-color:var(--ok);background:#f0f9f0;color:var(--ok)}
+.agent-step.done .num{background:var(--ok);color:#fff}
+.agent-card{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px;margin-bottom:14px}
+.agent-card h3{margin:0 0 10px;font-size:14px;color:var(--ink2)}
+.bar-chart .bar-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px}
+.bar-chart .bar-label{width:32%;text-align:right;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-chart .bar-track{flex:1;background:#eee;border-radius:2px;height:14px;overflow:hidden}
+.bar-chart .bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),#5b9bd6);transition:width .5s}
+.bar-chart .bar-val{width:38px;text-align:right;color:var(--muted);font-family:monospace}
+#agent-top-papers ol{margin:0;padding-left:20px}
+#agent-top-papers li{margin-bottom:8px;font-size:13px;line-height:1.5}
+#agent-top-papers .meta{color:var(--muted);font-size:11px;margin-top:2px}
+#agent-datasets .ds-row{padding:6px 8px;border-bottom:1px solid var(--line);font-size:13px}
+#agent-datasets .ds-row b{color:var(--accent)}
+</style>
 
 <!-- ============ PAGE 4: LIBRARY ============ -->
 <section id="p-library" class="page">
@@ -4545,6 +4610,18 @@ function go(p){
   });
   if(p==='library') renderLib();
   if(p==='home') renderHomeStats();
+  if(p==='analyze' && !window._analyzeInited){
+    // 首次进入分析台：自动加载示例数据，让变量立即可见
+    window._analyzeInited=true;
+    setTimeout(function(){
+      if(!DATA || !DATA_VARS.length){
+        try{
+          rsLog('🎯 首次进入分析台，已自动加载示例数据，可点击 📂 上传 替换为你自己的数据','ok');
+          loadSampleData();
+        }catch(e){ console.warn('auto sample load failed',e); }
+      }
+    }, 350);
+  }
   window.scrollTo({top:0,behavior:'smooth'});
   location.hash='#/'+p;
 }
@@ -4718,7 +4795,12 @@ async function fetchCrossref(q, yMin){
 async function fetchS2(q, yMin){
   var u='https://api.semanticscholar.org/graph/v1/paper/search?query='+encodeURIComponent(q)+'&limit=25&fields=title,abstract,year,authors,externalIds,citationCount,journal,publicationDate,url';
   if(yMin) u+='&year='+yMin+'-';
+  // S2 公开 API 限流较严：429 时退避后重试 1 次
   var r=await fetch(u,{cache:'no-store'});
+  if(r.status===429){
+    await new Promise(rs=>setTimeout(rs, 1200));
+    r=await fetch(u,{cache:'no-store'});
+  }
   if(!r.ok) throw new Error('S2 HTTP '+r.status);
   var j=await r.json();
   return (j.data||[]).map(function(it){
@@ -4769,7 +4851,7 @@ function renderResults(){
       +datasetMeta
       +'<div class="ractions">'
       +'<button class="btn sm" data-title="'+(r.title||'').replace(/"/g,'&quot;')+'" data-type="'+(isDataset?'dataset':'paper')+'" data-source="'+(r.source||'')+'" data-year="'+(r.year||'')+'" data-url="'+(r.url||'')+'" data-doi="'+(r.doi||'')+'" onclick="libAddPaper(this)">⭐ 收藏</button>'
-      +'<button class="btn sm" onclick="event.preventDefault();go(\'analyze\')">📊 去分析页</button>'
+      +'<button class="btn sm" onclick="loadSearchResultsToAnalyze()">📊 全部结果载入分析台</button>'
       +(r.url?('<a class="btn sm" href="'+r.url+'" target="_blank">↗ 原始页面</a>'):'')
       +'</div>'
       +'</div>';
@@ -4804,6 +4886,66 @@ function saveAllResults(){
   document.getElementById('btn-export').disabled=false;
   alert('本页共 '+list.length+' 条结果，新增收藏 '+added+' 条（跳过重复）');
 }
+
+/* 把当前检索结果（去重后）转换为 DataFrame 加载到分析台，便于直接做统计分析 */
+function loadSearchResultsToAnalyze(){
+  if(!RESULTS || RESULTS.length===0){
+    alert('请先进行检索，再点击「全部结果载入分析台」');
+    return;
+  }
+  var rows=RESULTS.map(function(r){
+    return {
+      title: String(r.title||'').slice(0,300),
+      year: r.year||null,
+      source: r.source||'',
+      kind: r.kind||(r.doi?'paper':'unknown'),
+      journal: r.journal||'',
+      authors: String(r.authors||'').slice(0,200),
+      citations: r.citations||0,
+      doi: r.doi||'',
+      pmid: r.pmid||'',
+      rid: r.rid||'',
+      url: r.url||''
+    };
+  });
+  var vars=['title','year','source','kind','journal','authors','citations','doi','pmid','rid','url'];
+  var types={
+    title:'character',year:'integer',source:'character',kind:'character',
+    journal:'character',authors:'character',citations:'integer',
+    doi:'character',pmid:'character',rid:'character',url:'character'
+  };
+  DATA={rows:rows,df:null,dict:{},meta:{name:'search_results.csv',vars:vars},types:types};
+  DATA_VARS=vars;
+  DATA_ROWS=rows.length;
+  RS_FILES.push({name:'search_results.csv',rows:rows.length,vars:vars.length,time:Date.now()});
+  go('analyze');
+  setTimeout(function(){
+    rsLog('📊 已载入 '+rows.length+' 条检索结果到分析台','ok');
+    if(typeof rsRenderFileList==='function') rsRenderFileList();
+    // 同步到当前引擎
+    if(typeof syncDataToEngine==='function'){
+      syncDataToEngine().then(function(){
+        rsRefreshEnv();
+      }).catch(function(e){ rsLogErr('数据同步失败: '+e.message); });
+    } else {
+      rsRefreshEnv();
+    }
+    // 自动填入适合检索结果的探索性分析代码
+    var ed=document.getElementById('rs-code');
+    if(ENGINE==='py'){
+      ed.value='# 检索结果分析 (共 '+rows.length+' 条)\n'
+        +'print("数据维度:", DF.shape)\nprint()\nprint("按数据源分布:")\nprint(DF["source"].value_counts())\nprint()\nprint("按年份分布:")\nprint(DF["year"].value_counts().sort_index())\nprint()\nprint("按引用数 Top 10 文献:")\nprint(DF.sort_values("citations", ascending=False)[["title","year","source","citations"]].head(10).to_string(index=False))';
+    } else {
+      ed.value='# 检索结果分析 (共 '+rows.length+' 条)\n'
+        +'cat("数据维度:", dim(.df), "\\n\\n")\n'
+        +'cat("按数据源分布:\\n"); print(table(.df$source))\n'
+        +'cat("\\n按年份分布:\\n"); print(table(.df$year))\n'
+        +'cat("\\n按引用数 Top 10:\\n")\n'
+        +'o <- order(.df$citations, decreasing=TRUE)\nprint(head(.df[o, c("title","year","source","citations")], 10))';
+    }
+  }, 350);
+}
+
 function exportSavedToCsv(){
   var items=libGet();
   if(items.length===0){alert('暂无收藏可导出');return}
@@ -4893,6 +5035,28 @@ function rsSetEngine(e){
   document.getElementById('rs-engine-tag').textContent=e==='py'?'🐍 Python':'📈 R';
   document.getElementById('rs-engine-tag').className='rs-engine-tag '+(e==='py'?'py':'r');
   rsLog('已切换到 '+(e==='py'?'Python (Pyodide)':'R (webR)'),'ok');
+  // 智能识别当前编辑器内容的语言：必要时自动替换为对应语言的模板
+  var ed=document.getElementById('rs-code');
+  var cur=ed.value||'';
+  var looksR = /<-|sapply\(|cat\(|summary\(|data\.frame|is\.numeric|nrow\(|library\(|read\.csv|readRDS|par\(|exists\(/.test(cur);
+  var looksPy = /\bdef\b|\bimport\b|\.shape|\.columns|pd\.|np\.|matplotlib|pyplot|describe\(|globals\(\)|print\(/.test(cur);
+  // 当编辑器内容是默认模板（无用户实质修改）时也自动替换
+  var isTemplate = /# (R |Python )?(描述性统计|基础可视化|可视化|线性回归|默认 Python 代码|在这里写代码)/.test(cur) || cur.trim()==='';
+  if(e==='py' && (looksR || isTemplate) && !looksPy){
+    rsLog('检测到 R 代码或模板，已自动替换为 Python 模板','warn');
+    rsLoadSnippet('stats');
+  } else if(e==='r' && (looksPy || isTemplate) && !looksR){
+    rsLog('检测到 Python 代码或模板，已自动替换为 R 模板','warn');
+    rsLoadSnippet('stats');
+  }
+  // sync data to new engine
+  if(DATA && DATA_VARS.length){
+    rsLog('正在同步数据到 '+(e==='py'?'DF':' .df')+' ...');
+    syncDataToEngine().then(function(){ rsRefreshEnv(); rsLog('✅ 数据已就绪','ok'); })
+      .catch(function(err){ rsLogErr('数据同步失败: '+err.message); });
+  } else {
+    rsRefreshEnv();
+  }
 }
 
 function rsLog(msg,cls){
@@ -4930,61 +5094,89 @@ function rsSwitchTab(tab,type){
 
 var Snippets={
   py_stats:`# 描述性统计
-print('=== 描述性统计 ===')
-print(DF.describe(include='all'))
-print()
-print('缺失值：')
-print(DF.isnull().sum())
-print()
-print('相关矩阵：')
-print(DF.select_dtypes(include='number').corr().round(3))`,
+if 'DF' not in globals() or DF is None:
+    print('⚠ DF 不存在，请先在左侧「📁 文件 / 数据」上传 CSV 或点击「📊 加载示例数据」')
+else:
+    print('=== 描述性统计 ===')
+    print(DF.describe(include='all'))
+    print()
+    print('缺失值：')
+    print(DF.isnull().sum())
+    print()
+    print('相关矩阵：')
+    print(DF.select_dtypes(include='number').corr().round(3))`,
   py_viz:`# 基础可视化
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-# 数值变量分布
-num_cols = DF.select_dtypes(include='number').columns[:6]
-DF[num_cols].hist(figsize=(12, 8), bins=20)
-plt.tight_layout()
-plt.savefig('/tmp/plot.png')
-print('直方图已保存')`,
+if 'DF' not in globals() or DF is None:
+    print('⚠ DF 不存在，请先在左侧上传 CSV 或点击「📊 加载示例数据」')
+else:
+    num_cols = DF.select_dtypes(include='number').columns[:6]
+    if len(num_cols) == 0:
+        print('⚠ DF 中没有数值列')
+    else:
+        DF[num_cols].hist(figsize=(12, 8), bins=20, color='steelblue', edgecolor='white')
+        plt.tight_layout()
+        plt.savefig('/tmp/plot.png')
+        print('✅ 已绘制', len(num_cols), '个数值变量的直方图')`,
   py_linear:`# 线性回归
 from scipy import stats
 import numpy as np
 
-numeric = DF.select_dtypes(include='number')
-corr_matrix = numeric.corr().round(3)
-print('相关矩阵:')
-print(corr_matrix)
-
-# 选第一个数值列做正态性检验
-first_col = numeric.columns[0]
-if first_col:
-    stat, p = stats.shapiro(numeric[first_col].dropna().head(5000))
-    print(f'\\n{first_col} 的正态性检验: W={stat:.4f}, p={p:.4f}')`,
+if 'DF' not in globals() or DF is None:
+    print('⚠ DF 不存在，请先在左侧上传 CSV 或点击「📊 加载示例数据」')
+else:
+    numeric = DF.select_dtypes(include='number')
+    if numeric.shape[1] < 2:
+        print('⚠ 数值列不足 2 列，无法做相关/回归')
+    else:
+        corr_matrix = numeric.corr().round(3)
+        print('相关矩阵:')
+        print(corr_matrix)
+        first_col = numeric.columns[0]
+        stat, p = stats.shapiro(numeric[first_col].dropna().head(5000))
+        print(f'\\n{first_col} 的正态性检验: W={stat:.4f}, p={p:.4f}')`,
   r_stats:`# R 描述性统计
-cat('=== 描述性统计 ===\\n')
-print(summary(.df))
-cat('\\n缺失值：\\n')
-print(colSums(is.na(.df)))
-cat('\\n相关矩阵（数值列）：\\n')
-nums <- sapply(.df, is.numeric)
-if(sum(nums) > 1) print(round(cor(.df[,nums]), 3))`,
+if(!exists('.df') || !is.data.frame(.df)){
+  cat('⚠ .df 不存在，请先在左侧「📁 文件 / 数据」上传 CSV 或点击「📊 加载示例数据」\\n')
+} else {
+  cat('=== 描述性统计 ===\\n')
+  print(summary(.df))
+  cat('\\n缺失值：\\n')
+  print(colSums(is.na(.df)))
+  cat('\\n相关矩阵（数值列）：\\n')
+  nums <- sapply(.df, is.numeric)
+  if(sum(nums) > 1) print(round(cor(.df[,nums], use='complete.obs'), 3))
+}`,
   r_viz:`# R 可视化
-nums <- sapply(.df, is.numeric)
-num_cols <- names(.df[,nums])[1:min(6, sum(nums))]
-if(length(num_cols) > 0){
-  par(mfrow=c(2,3), mar=c(4,4,2,1))
-  for(col in num_cols) hist(.df[[col]], main=col, breaks=30)
+if(!exists('.df') || !is.data.frame(.df)){
+  cat('⚠ .df 不存在，请先在左侧「📁 文件 / 数据」上传 CSV 或点击「📊 加载示例数据」\\n')
+} else {
+  nums <- sapply(.df, is.numeric)
+  num_cols <- names(.df)[nums][1:min(6, sum(nums))]
+  if(length(num_cols) == 0){
+    cat('⚠ .df 中没有数值列\\n')
+  } else {
+    par(mfrow=c(2,3), mar=c(4,4,2,1))
+    for(col in num_cols) hist(.df[[col]], main=col, breaks=30, col='steelblue', border='white')
+    cat('✅ 已绘制', length(num_cols), '个数值变量的直方图\\n')
+  }
 }`,
   r_linear:`# R 线性回归
-nums <- sapply(.df, is.numeric)
-num_cols <- names(.df[,nums])
-if(length(num_cols) >= 2){
-  fm <- paste(num_cols[1], '~', paste(num_cols[-1], collapse=' + '))
-  model <- lm(fm, data=.df)
-  print(summary(model))
+if(!exists('.df') || !is.data.frame(.df)){
+  cat('⚠ .df 不存在，请先在左侧「📁 文件 / 数据」上传 CSV 或点击「📊 加载示例数据」\\n')
+} else {
+  nums <- sapply(.df, is.numeric)
+  num_cols <- names(.df)[nums]
+  if(length(num_cols) < 2){
+    cat('⚠ 数值列不足 2 列，无法做相关/回归\\n')
+  } else {
+    fm <- paste(num_cols[1], '~', paste(num_cols[-1], collapse=' + '))
+    model <- lm(fm, data=.df)
+    print(summary(model))
+  }
 }`
 };
 
@@ -5003,40 +5195,95 @@ function rsLoadSnippet(type){
 
 function rsRefreshEnv(){
   var body=document.getElementById('rs-env-body');
-  if(ENGINE==='py' && PYODIDE){
-    var code=[];
-    if(DATA){
-      code.push('import json');
-      code.push(`_env=[]`);
-      code.push(`_env.append(('DF', 'DataFrame', str(DF.shape[0])+' rows x '+str(DF.shape[1])+' cols'))`);
-      code.push(`for _c in DF.columns:`);
-      code.push(`  _env.append((_c, str(DF[_c].dtype), str(DF[_c].nunique())+' unique'))`);
-      code.push(`print(json.dumps(_env))`);
-      // Execute and parse
+  if(!body) return;
+  // If engine not ready, show hint
+  if(ENGINE==='py' && !PYODIDE){
+    body.innerHTML='<div class="rs-empty">Pyodide 未加载<br><span style="font-size:11px">点击 🐍 Py 或运行代码以加载</span></div>';
+    return;
+  }
+  if(ENGINE==='r' && !WEBR){
+    body.innerHTML='<div class="rs-empty">webR 未加载<br><span style="font-size:11px">点击 📈 R 或运行代码以加载</span></div>';
+    return;
+  }
+  body.innerHTML='<div class="rs-empty">查询中…</div>';
+  rsRefreshEnvAsync();
+}
+
+async function rsRefreshEnvAsync(){
+  var body=document.getElementById('rs-env-body');
+  try{
+    if(ENGINE==='py' && PYODIDE){
+      var pyCode='import json as _j\n'+
+                 '_env=[]\n'+
+                 'if "DF" in globals() and DF is not None:\n'+
+                 '    try: _env.append(("DF","DataFrame",str(DF.shape[0])+" × "+str(DF.shape[1])))\n'+
+                 '    except: pass\n'+
+                 '    try:\n'+
+                 '        for _c in list(DF.columns):\n'+
+                 '            _env.append((_c, str(DF[_c].dtype), str(DF[_c].nunique())+" uniq"))\n'+
+                 '    except: pass\n'+
+                 'for _k,_v in list(globals().items()):\n'+
+                 '    if _k.startswith("_") or _k in ("DF","In","Out","exit","quit","open","hint"): continue\n'+
+                 '    _t=type(_v).__name__\n'+
+                 '    if _t in ("module","function","type","builtin_function_or_method"): continue\n'+
+                 '    try:\n'+
+                 '        if _t=="DataFrame": _sz=str(_v.shape[0])+" × "+str(_v.shape[1])\n'+
+                 '        elif _t in ("list","dict","set","tuple"): _sz="len "+str(len(_v))\n'+
+                 '        elif _t in ("ndarray","Series"): _sz=str(_v.shape)\n'+
+                 '        else: _sz=str(_v)[:30]\n'+
+                 '        _env.append((_k,_t,_sz))\n'+
+                 '    except: pass\n'+
+                 'print(_j.dumps(_env, default=str, ensure_ascii=False))\n';
+      var s = await PYODIDE.runPythonAsync(pyCode);
+      var items = JSON.parse(s.trim().split('\n').pop()||'[]');
+      renderEnvList(items,'py');
+    } else if(ENGINE==='r' && WEBR){
+      // Build a JSON-safe list of variables in global env (base R only, no jsonlite needed).
+      // Wrap in local() so loop variables (nm, obj, tp, sz, ret) don't leak into globalenv.
+      var rcode='local({\n'+
+                '  ret <- c()\n'+
+                '  for(nm in ls(envir=globalenv(), all.names=TRUE)){\n'+
+                '    obj <- tryCatch(get(nm, envir=globalenv()), error=function(e) NULL)\n'+
+                '    if(is.null(obj)||is.function(obj)) next\n'+
+                '    tp <- class(obj)[1]\n'+
+                '    sz <- ""\n'+
+                '    if(is.data.frame(obj)) sz <- paste0(nrow(obj),"x",ncol(obj))\n'+
+                '    else if(is.matrix(obj)) sz <- paste0(nrow(obj),"x",ncol(obj))\n'+
+                '    else if(is.list(obj)) sz <- paste0("len",length(obj))\n'+
+                '    else if(is.vector(obj) && length(obj)>1) sz <- paste0("len",length(obj))\n'+
+                '    nm_e <- gsub("\\\\", "\\\\\\\\", nm, fixed=TRUE)\n'+
+                '    nm_e <- gsub(\'"\', \'\\\\"\', nm_e, fixed=TRUE)\n'+
+                '    tp_e <- gsub(\'"\', \'\\\\"\', tp, fixed=TRUE)\n'+
+                '    sz_e <- gsub(\'"\', \'\\\\"\', sz, fixed=TRUE)\n'+
+                '    ret <- c(ret, paste0(\'{"name":"\', nm_e, \'","type":"\', tp_e, \'","size":"\', sz_e, \'"}\'))\n'+
+                '  }\n'+
+                '  cat("[",paste(ret, collapse=","),"]")\n'+
+                '})\n';
+      var r = await rsEvalRCapture(rcode);
+      var jsonStr = rsCaptureOutputToString(r.output);
+      var items = [];
+      try{ items = JSON.parse(jsonStr.trim()||'[]') }catch(e){ items=[] }
+      renderEnvList(items,'r');
     }
-    rsLog('（点击变量名可在数据查看器中打开）');
-    renderEnvFromData();
-  } else if(ENGINE==='r' && WEBR){
-    renderEnvFromData();
-  } else {
-    body.innerHTML='<div class="rs-empty">引擎未就绪</div>';
+  }catch(e){
+    body.innerHTML='<div class="rs-empty">环境查询失败: '+String(e.message||e)+'</div>';
   }
 }
 
-function renderEnvFromData(){
+function renderEnvList(items, lang){
   var body=document.getElementById('rs-env-body');
-  if(!DATA){body.innerHTML='<div class="rs-empty">请先上传数据</div>';return}
-  var items=[];
-  items.push({name:'DF',type:'DataFrame',size:DATA_ROWS+' × '+DATA_VARS.length,action:"rsShowData('DF')"});
-  DATA_VARS.forEach(function(v){
-    var tp=DATA.types[v]||'?';
-    items.push({name:v,type:tp,size:'',action:"rsShowData('"+v+"')"});
-  });
-  body.innerHTML=items.map(function(it){
-    return '<div class="rs-env-item" onclick="'+it.action+'">'
-      +'<div><span class="name">'+it.name+'</span></div>'
-      +'<div><span class="type">'+it.type+'</span>'+(it.size?' <span class="size">'+it.size+'</span>':'')+'</div>'
-      +'</div>';
+  if(!items || items.length===0){
+    body.innerHTML='<div class="rs-empty">暂无变量<br><button class="rs-btn primary" style="margin-top:6px" onclick="loadSampleData()">📊 加载示例数据</button></div>';
+    return;
+  }
+  body.innerHTML = items.map(function(it){
+    var safe = String(it.name).replace(/'/g,'\\\'').replace(/"/g,'&quot;');
+    var action = "rsShowVarSummary('"+safe+"','"+lang+"')";
+    return '<div class="rs-env-item" onclick="'+action+'">'+
+           '<div><span class="name">'+it.name+'</span></div>'+
+           '<div><span class="type">'+it.type+'</span>'+
+           (it.size?' <span class="size">'+it.size+'</span>':'')+'</div>'+
+           '</div>';
   }).join('');
 }
 
@@ -5074,36 +5321,49 @@ async function rsRunCode(){
   if(!code.trim()){rsLog('请输入代码','warn');return}
   document.getElementById('rs-status').textContent='运行中...';
   rsLogIn(ENGINE+'> '+code.split('\n')[0]+(code.split('\n').length>1?' ...':''));
+  var captured=[];
   var oldLog=console.log,oldErr=console.error,oldWarn=console.warn;
-  var capture=[];
-  console.log=function(){capture.push(Array.from(arguments).join(' '))};
-  console.error=function(){capture.push('[ERROR] '+Array.from(arguments).join(' '))};
-  console.warn=function(){capture.push('[WARN] '+Array.from(arguments).join(' '))};
+  console.log=function(){captured.push({cls:'',msg:Array.from(arguments).join(' ')})};
+  console.error=function(){captured.push({cls:'err',msg:Array.from(arguments).join(' ')})};
+  console.warn=function(){captured.push({cls:'warn',msg:Array.from(arguments).join(' ')})};
   try{
     if(ENGINE==='py'){
       await rsRunPy(code);
-    } else {
-      await rsRunR(code);
-    }
-    capture.forEach(function(m){rsLog(m)});
-    if(capture.length===0) rsLog('(无输出)');
-    // Check for generated plot
-    if(ENGINE==='py'){
+      // detect plot files
       try{
-        if(PYODIDE && PYODIDE.FS) {
-          try{
-            var files=PYODIDE.FS.readdir('/tmp');
-            var png=files.filter(function(f){return f.endsWith('.png')});
-            if(png.length>0){
-              rsLog('检测到 '+png.length+' 个图文件','ok');
-              rsDisplayPyPlot(png[png.length-1]);
-            }
-          }catch(e){}
+        if(PYODIDE && PYODIDE.FS){
+          var files=PYODIDE.FS.readdir('/tmp');
+          var png=files.filter(function(f){return f.endsWith('.png')}).sort();
+          if(png.length>0){
+            rsDisplayPyPlot(png[png.length-1]);
+            captured.push({cls:'ok',msg:'📊 检测到 '+png.length+' 个图文件'});
+          }
         }
       }catch(e){}
+    } else {
+      var rResult = await rsRunR(code);
+      if(rResult && rResult.output){
+        rResult.output.forEach(function(o){
+          var cls='';
+          if(o.type==='stderr'||o.type==='error') cls='err';
+          else if(o.type==='warning') cls='warn';
+          captured.push({cls:cls, msg:o.data});
+        });
+      }
+      if(rResult && rResult.images && rResult.images.length>0){
+        rsDisplayRPlot(rResult.images[rResult.images.length-1]);
+        captured.push({cls:'ok',msg:'📊 已生成 '+rResult.images.length+' 张图'});
+      }
     }
+    captured.forEach(function(c){
+      if(c.cls==='err') rsLogErr(c.msg);
+      else if(c.cls==='warn') rsLogWarn(c.msg);
+      else if(c.cls==='ok') rsLog(c.msg,'ok');
+      else rsLog(c.msg);
+    });
+    if(captured.length===0) rsLog('(无输出)');
   }catch(e){
-    rsLogErr(String(e));
+    rsLogErr(String(e.message||e));
   }finally{
     console.log=oldLog;console.error=oldErr;console.warn=oldWarn;
     document.getElementById('rs-status').textContent='就绪';
@@ -5115,11 +5375,9 @@ function rsRunSel(){
   var ta=document.getElementById('rs-code');
   var sel=ta.value.slice(ta.selectionStart,ta.selectionEnd).trim();
   if(!sel){rsLog('未选中任何文本','warn');return}
-  rsRunCode.call(null); // just run full? no - set value to selection temporarily
   var orig=ta.value;
   ta.value=sel;
-  rsRunCode();
-  setTimeout(function(){ta.value=orig},100);
+  rsRunCode().finally(function(){ setTimeout(function(){ta.value=orig},50) });
 }
 
 async function rsRunPy(code){
@@ -5130,31 +5388,304 @@ async function rsRunPy(code){
     PYODIDE.globals.set('DICT',DATA.dict);
     PYODIDE.globals.set('META',PYODIDE.toPy(JSON.stringify(DATA.meta||{})));
   }
-  await PYODIDE.runPython(code);
+  // wrap user code to capture exceptions with traceback
+  var indented = code.split('\n').map(function(l){return '    '+l}).join('\n');
+  var wrapped =
+    'import traceback as _tb\n'+
+    'try:\n'+
+    indented+'\n'+
+    'except Exception as _e:\n'+
+    '    print("[ERROR] "+type(_e).__name__+": "+str(_e))\n'+
+    '    _tb.print_exc()\n';
+  await PYODIDE.runPythonAsync(wrapped);
+}
+
+/* Helper: capture R output via Shelter.captureR (proper webR 0.4 API).
+   Returns { output: [{type, data}], images: [ImageBitmap] }. */
+async function rsEvalRCapture(code){
+  if(WEBR.Shelter){
+    var shelter = await new WEBR.Shelter();
+    try {
+      var result = await shelter.captureR(code, {
+        captureStreams: true,
+        captureConditions: true,
+        withAutoprint: false,
+        withHandlers: false
+      });
+      return {
+        output: (result && result.output) || [],
+        images: (result && result.images) || []
+      };
+    } finally {
+      try { shelter.purge(); } catch(e){}
+    }
+  }
+  // Fallback for older webR: use sink() + readLines()
+  return await rsEvalRCaptureFallback(code);
+}
+
+/* Fallback capture using sink() redirection. */
+async function rsEvalRCaptureFallback(code){
+  var tstamp=Date.now()+'_'+Math.random().toString(36).slice(2,8);
+  var outPath='/tmp/_rs_out_'+tstamp+'.txt';
+  var errPath='/tmp/_rs_err_'+tstamp+'.txt';
+  var wrapped=
+    'sink("'+outPath+'", type="output")\n'+
+    'sink("'+errPath+'", type="message")\n'+
+    'tryCatch({\n'+
+    code+'\n'+
+    '}, error=function(e){ message("ERROR: ", conditionMessage(e)) }, warning=function(w){ message("WARNING: ", conditionMessage(w)) })\n'+
+    'sink(type="message")\n'+
+    'sink(type="output")\n';
+  try{
+    await WEBR.evalRVoid(wrapped);
+  }catch(e){
+    try{await WEBR.evalRVoid('sink(type="message"); sink(type="output")')}catch(_){}
+    throw e;
+  }
+  var outputArr=[];
+  try{
+    var outRes=await WEBR.evalR('tryCatch(readLines("'+outPath+'"), error=function(e) character(0))');
+    var outLines=await outRes.toArray();
+    if(outLines.length>0) outputArr.push({type:'stdout', data:outLines.join('\n')});
+  }catch(e){}
+  try{
+    var errRes=await WEBR.evalR('tryCatch(readLines("'+errPath+'"), error=function(e) character(0))');
+    var errLines=await errRes.toArray();
+    if(errLines.length>0) outputArr.push({type:'stderr', data:errLines.join('\n')});
+  }catch(e){}
+  try{await WEBR.evalRVoid('unlink(c("'+outPath+'","'+errPath+'"))')}catch(e){}
+  return {output: outputArr, images: []};
+}
+
+/* Helper: convert captureR output array to a single stdout string. */
+function rsCaptureOutputToString(captureOutput){
+  var s='';
+  (captureOutput||[]).forEach(function(o){
+    if(o.type==='stdout') s+=o.data+'\n';
+  });
+  return s;
 }
 
 async function rsRunR(code){
   await ensureEngine();
   if(!WEBR) throw new Error('webR 加载失败');
-  if(DATA){
+  if(DATA && DATA_VARS.length){
+    // rebuild .df in R env
     var rcode='.df <- data.frame(';
     var parts=[];
     DATA_VARS.forEach(function(v){
       var vals=DATA.rows.map(function(r){var x=r[v];return x==null?'NA':JSON.stringify(x)});
-      parts.push(v+'='+vals.join(','));
+      parts.push('`'+v+'`='+vals.join(','));
     });
-    rcode+=parts.join(',')+', stringsAsFactors=FALSE)';
-    try{await WEBR.evalR(rcode)}catch(e){}
+    rcode+=parts.join(',')+', stringsAsFactors=FALSE, check.names=FALSE)';
+    try{await WEBR.evalRVoid(rcode)}catch(e){ /* may fail on type mix, ignore */ }
   }
-  await WEBR.evalR(code);
-  // Check for R plot
+  // Use Shelter.captureR which properly captures stdout/stderr/images via webr::canvas device
+  return await rsEvalRCapture(code);
+}
+
+function rsDisplayRPlot(img){
   try{
-    var rFiles=await WEBR.evalR('list.files(tempdir(), pattern="\\.png$", full.names=TRUE)');
-    var fArr=await rFiles.toArray();
-    if(fArr && fArr.length>0){
-      rsLog('R 生成了 '+fArr.length+' 个图文件','ok');
+    // img can be an ImageBitmap or similar drawable object
+    var canvas=document.createElement('canvas');
+    canvas.width=img.width||800; canvas.height=img.height||600;
+    var ctx=canvas.getContext('2d');
+    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    var url=canvas.toDataURL('image/png');
+    var p=document.getElementById('rs-plot');
+    p.innerHTML='<img src="'+url+'" alt="plot" style="max-width:100%;max-height:100%">';
+    RS_PLOT_DATA=url;
+  }catch(e){
+    // Fallback: maybe it's a byte array
+    try{
+      var blob=new Blob([img], {type:'image/png'});
+      var url2=URL.createObjectURL(blob);
+      var p2=document.getElementById('rs-plot');
+      p2.innerHTML='<img src="'+url2+'" alt="plot" style="max-width:100%;max-height:100%">';
+      RS_PLOT_DATA=url2;
+    }catch(e2){
+      rsLog('无法渲染 R 图: '+e2.message,'err');
     }
-  }catch(e){}
+  }
+}
+
+async function syncDataToEngine(){
+  if(!DATA || !DATA_VARS.length) return;
+  if(ENGINE==='py'){
+    await ensureEngine();
+    if(PYODIDE){
+      PYODIDE.globals.set('DF',DATA.df);
+      PYODIDE.globals.set('DICT',DATA.dict);
+      PYODIDE.globals.set('META',PYODIDE.toPy(JSON.stringify(DATA.meta||{})));
+    }
+  } else {
+    await ensureEngine();
+    if(WEBR){
+      var rcode='.df <- data.frame(';
+      var parts=[];
+      DATA_VARS.forEach(function(v){
+        var vals=DATA.rows.map(function(r){var x=r[v];return x==null?'NA':JSON.stringify(x)});
+        parts.push('`'+v+'`='+vals.join(','));
+      });
+      rcode+=parts.join(',')+', stringsAsFactors=FALSE, check.names=FALSE)';
+      await WEBR.evalRVoid(rcode);
+    }
+  }
+}
+
+async function rsShowVarSummary(name, lang){
+  var modal=document.getElementById('rs-dataview');
+  var title=document.getElementById('rs-dataview-title');
+  var body=document.getElementById('rs-dataview-body');
+  title.textContent='变量摘要 · '+name;
+  body.innerHTML='<div style="color:#aaa">查询中…</div>';
+  modal.classList.add('active');
+  try{
+    if(lang==='py' && PYODIDE){
+      var py = 'import json as _j\n'+
+               '_o={}\n'+
+               '_o["name"]="'+name+'"\n'+
+               'try:\n'+
+               '    _o["dtype"]=str(DF["'+name+'"].dtype)\n'+
+               '    _o["nunique"]=int(DF["'+name+'"].nunique())\n'+
+               '    _o["nmissing"]=int(DF["'+name+'"].isnull().sum())\n'+
+               '    _o["head"]=DF["'+name+'"].head(20).tolist()\n'+
+               '    if _o["dtype"].startswith(("int","float")):\n'+
+               '        _o["stats"]=DF["'+name+'"].describe().round(3).to_dict()\n'+
+               '    else:\n'+
+               '        vc=DF["'+name+'"].value_counts().head(15)\n'+
+               '        _o["freq"]={str(k):int(v) for k,v in vc.items()}\n'+
+               'except Exception as _e:\n'+
+               '    _o["error"]=str(_e)\n'+
+               'print(_j.dumps(_o, default=str, ensure_ascii=False))\n';
+      var s = await PYODIDE.runPythonAsync(py);
+      var o = JSON.parse(s.trim().split('\n').pop());
+      renderVarSummary(body, name, o);
+    } else if(lang==='r' && WEBR){
+      // Build summary using base R only (no jsonlite dependency).
+      // Wrap in local() so temporary vars don't leak into globalenv.
+      var safeName = name.replace(/"/g, '\\"');
+      var rcode='local({\n'+
+        '  .col <- .df[["'+safeName+'"]]\n'+
+        '  .tp <- class(.col)[1]\n'+
+        '  .nu <- length(unique(.col[!is.na(.col)]))\n'+
+        '  .nm <- sum(is.na(.col))\n'+
+        '  .hd <- as.character(head(.col[!is.na(.col)], 20))\n'+
+        '  cat("DTYPE=", shQuote(as.character(.tp)), "\\n", sep="")\n'+
+        '  cat("NUNIQUE=", .nu, "\\n", sep="")\n'+
+        '  cat("NMISSING=", .nm, "\\n", sep="")\n'+
+        '  if(is.numeric(.col)){\n'+
+        '    s <- summary(.col)\n'+
+        '    cat("STATS_START\\n")\n'+
+        '    for(nm in names(s)) cat(nm, "=", as.character(s[nm]), "\\n", sep="")\n'+
+        '    cat("STATS_END\\n")\n'+
+        '  } else {\n'+
+        '    t <- head(sort(table(.col, useNA="ifany"), decreasing=TRUE), 15)\n'+
+        '    cat("FREQ_START\\n")\n'+
+        '    for(v in names(t)) cat(encodeString(as.character(v), quote="\""), "=", as.character(t[v]), "\\n", sep="")\n'+
+        '    cat("FREQ_END\\n")\n'+
+        '  }\n'+
+        '  cat("HEAD_START\\n")\n'+
+        '  for(v in .hd) cat(encodeString(as.character(v), quote="\""), "\\n", sep="")\n'+
+        '  cat("HEAD_END\\n")\n'+
+        '})\n';
+      var r = await rsEvalRCapture(rcode);
+      var text = rsCaptureOutputToString(r.output);
+      var o = parseRSummary(text);
+      renderVarSummary(body, name, o);
+    }
+  }catch(e){
+    body.innerHTML='<pre style="color:#f48771">查询失败: '+e.message+'</pre>';
+  }
+}
+
+/* Parse the structured output emitted by R's rsShowVarSummary. */
+function parseRSummary(text){
+  var o={dtype:'', nunique:null, nmissing:null, stats:null, freq:null, head:[]};
+  if(!text) return o;
+  var lines=text.split('\n');
+  var i=0, m;
+  while(i<lines.length){
+    var line=lines[i];
+    if(line.indexOf('DTYPE=')===0){
+      m=/^DTYPE="(.*)"$/.exec(line); if(m) o.dtype=m[1];
+    } else if(line.indexOf('NUNIQUE=')===0){
+      o.nunique=parseInt(line.substring(8))||0;
+    } else if(line.indexOf('NMISSING=')===0){
+      o.nmissing=parseInt(line.substring(9))||0;
+    } else if(line==='STATS_START'){
+      o.stats={}; i++;
+      while(i<lines.length && lines[i]!=='STATS_END'){
+        var eq=lines[i].indexOf('=');
+        if(eq>0){
+          var k=lines[i].substring(0,eq);
+          var v=lines[i].substring(eq+1);
+          o.stats[k]=v;
+        }
+        i++;
+      }
+    } else if(line==='FREQ_START'){
+      o.freq={}; i++;
+      while(i<lines.length && lines[i]!=='FREQ_END'){
+        var eq2=lines[i].indexOf('=');
+        if(eq2>0){
+          var k2=lines[i].substring(0,eq2);
+          var v2=lines[i].substring(eq2+1);
+          // strip surrounding quotes
+          if(k2.length>=2 && k2[0]==='"' && k2[k2.length-1]==='"') k2=k2.slice(1,-1);
+          o.freq[k2]=parseInt(v2)||0;
+        }
+        i++;
+      }
+    } else if(line==='HEAD_START'){
+      o.head=[]; i++;
+      while(i<lines.length && lines[i]!=='HEAD_END'){
+        var v3=lines[i];
+        if(v3.length>=2 && v3[0]==='"' && v3[v3.length-1]==='"') v3=v3.slice(1,-1);
+        o.head.push(v3);
+        i++;
+      }
+    }
+    i++;
+  }
+  return o;
+}
+
+function renderVarSummary(body, name, o){
+  var h='<div style="margin-bottom:10px;padding:8px;background:#2d2d2d;border-radius:3px">';
+  h+='<b style="color:#9cdcfe">'+name+'</b> · <span style="color:#808080">'+(o.dtype||'?')+'</span>';
+  if(o.nunique!=null) h+=' · <span style="color:#dcdcaa">唯一值: '+o.nunique+'</span>';
+  if(o.nmissing!=null) h+=' · <span style="color:#f48771">缺失: '+o.nmissing+'</span>';
+  h+='</div>';
+  if(o.stats){
+    h+='<h4 style="color:#89d185;margin:8px 0">数值统计</h4><table><tbody>';
+    Object.keys(o.stats).forEach(function(k){ h+='<tr><td style="padding:3px 10px;color:#aaa">'+k+'</td><td style="padding:3px 10px;font-family:monospace">'+o.stats[k]+'</td></tr>' });
+    h+='</tbody></table>';
+  }
+  if(o.freq){
+    h+='<h4 style="color:#89d185;margin:12px 0 8px">频数 Top 15</h4><table><thead><tr><th style="padding:3px 10px">值</th><th style="padding:3px 10px">频数</th></tr></thead><tbody>';
+    Object.keys(o.freq).forEach(function(k){ h+='<tr><td style="padding:3px 10px">'+k+'</td><td style="padding:3px 10px;font-family:monospace">'+o.freq[k]+'</td></tr>' });
+    h+='</tbody></table>';
+  }
+  if(o.head){
+    h+='<h4 style="color:#89d185;margin:12px 0 8px">前 20 个值</h4><div style="display:flex;flex-wrap:wrap;gap:4px">';
+    o.head.forEach(function(v){ h+='<span style="background:#2a2a2a;padding:2px 6px;border-radius:2px;font-size:11px;font-family:monospace">'+String(v).slice(0,30)+'</span>' });
+    h+='</div>';
+  }
+  body.innerHTML=h;
+}
+
+function loadSampleData(){
+  var csv='id,age,sex,phq9,gad7,suicide_risk,treatment,depression_score\n'+
+          '1,23,F,5,4,0,No,2.1\n2,34,M,12,8,1,Yes,5.8\n3,45,F,18,15,1,Yes,8.2\n'+
+          '4,28,M,3,2,0,No,1.5\n5,52,F,22,18,1,Yes,9.1\n6,19,M,7,5,0,No,3.0\n'+
+          '7,38,F,15,11,1,Yes,6.5\n8,61,M,9,6,0,No,4.0\n9,27,F,14,10,1,Yes,6.0\n'+
+          '10,44,M,6,4,0,No,2.5\n11,33,F,11,7,0,No,4.8\n12,50,M,20,16,1,Yes,8.5\n'+
+          '13,29,F,8,5,0,No,3.5\n14,42,M,13,9,1,Yes,5.5\n15,36,F,4,3,0,No,1.8\n';
+  var blob=new Blob([csv],{type:'text/csv'});
+  var file=new File([blob],'sample_depression.csv',{type:'text/csv'});
+  handleFile2(file);
 }
 
 function rsDisplayPyPlot(filename){
@@ -5235,6 +5766,10 @@ async function handleFile2(file){
     RS_FILES.push({name:file.name,rows:rows.length,vars:vars.length,time:Date.now()});
     rsRenderFileList();
     rsLog('已加载: '+file.name+' | '+rows.length+' 行 × '+vars.length+' 列','ok');
+    // Sync data to active engine before refreshing env, so .df / DF is visible
+    try{
+      await syncDataToEngine();
+    }catch(e){ rsLog('数据同步到引擎失败: '+e.message,'warn'); }
     rsRefreshEnv();
     // Auto-generate summary code
     var ed=document.getElementById('rs-code');
@@ -5789,15 +6324,291 @@ async function runCustomCode(){
 /* Safe base64 encode for webR */
 function toB64(str){var b=new TextEncoder().encode(str);var s='';for(var i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s)}
 
+/* ========= AGENT: smart literature analysis ========= */
+var AGENT_LAST=null;
+
+async function runAgentAnalysis(){
+  var q=document.getElementById('agent-q').value.trim();
+  if(!q){ alert('请输入关键词');return; }
+  var yMin=document.getElementById('agent-year').value;
+  for(var i=1;i<=5;i++){var s=document.getElementById('step-'+i);s.classList.remove('active','done')}
+  document.getElementById('agent-report').style.display='none';
+  var st=document.getElementById('agent-status');
+  st.className='empty-tip';st.style.display='block';
+  st.innerHTML='🚀 启动智能分析：<b>'+q+'</b><br><small style="color:var(--muted)">预计耗时 15-30 秒</small>';
+  var papers=[],datasets=[];
+  // step 1: papers
+  setStep(1,'active');
+  st.innerHTML+='<div style="margin-top:8px">📡 正在从 PubMed / Crossref / Semantic Scholar 爬取文献...</div>';
+  try{papers=papers.concat(await fetchPubmed(q,yMin))}catch(e){console.error('PubMed',e)}
+  try{papers=papers.concat(await fetchCrossref(q,yMin))}catch(e){console.error('Crossref',e)}
+  try{papers=papers.concat(await fetchS2(q,yMin))}catch(e){console.error('S2',e)}
+  papers=dedupePapers(papers);
+  setStep(1,'done');
+  st.innerHTML+='<div style="margin-top:4px;color:var(--ok)">✅ 文献: '+papers.length+' 篇</div>';
+  // step 2: datasets
+  setStep(2,'active');
+  st.innerHTML+='<div style="margin-top:8px">📡 正在从 Zenodo 爬取数据集...</div>';
+  try{datasets=await fetchZenodo(q,yMin)}catch(e){console.error('Zenodo',e);datasets=[]}
+  setStep(2,'done');
+  st.innerHTML+='<div style="margin-top:4px;color:var(--ok)">✅ 数据集: '+datasets.length+' 个</div>';
+  // step 3: bibliometrics
+  setStep(3,'active');
+  st.innerHTML+='<div style="margin-top:8px">📊 正在做文献计量分析...</div>';
+  var stats=computeBibliometrics(papers,q);
+  setStep(3,'done');
+  // step 4: related
+  setStep(4,'active');
+  st.innerHTML+='<div style="margin-top:8px">💾 关联本地数据集...</div>';
+  var related=matchLocalDatasets(q,stats.keywords);
+  setStep(4,'done');
+  // step 5: report
+  setStep(5,'active');
+  st.innerHTML+='<div style="margin-top:8px">📝 生成报告...</div>';
+  var md=buildAgentReport(q,yMin,papers,datasets,stats,related);
+  AGENT_LAST={papers:papers,datasets:datasets,stats:stats,report:md,query:q};
+  setStep(5,'done');
+  renderAgentReport(papers,datasets,stats,related,md);
+  st.style.display='none';
+  document.getElementById('agent-report').style.display='block';
+}
+
+function setStep(n,state){
+  var el=document.getElementById('step-'+n);
+  if(!el)return;
+  el.classList.remove('active','done');
+  if(state)el.classList.add(state);
+}
+
+function dedupePapers(arr){
+  var seen=new Set(),out=[];
+  arr.forEach(function(p){
+    var key='';
+    if(p.doi)key=p.doi.toLowerCase();
+    else if(p.pmid)key='pmid:'+p.pmid;
+    else key=(p.title||'').trim().toLowerCase().slice(0,80);
+    if(!key||seen.has(key))return;
+    seen.add(key);out.push(p);
+  });
+  return out;
+}
+
+function computeBibliometrics(papers,q){
+  var years={};
+  papers.forEach(function(p){if(p.year){years[p.year]=(years[p.year]||0)+1}});
+  var authors={};
+  papers.forEach(function(p){
+    if(!p.authors)return;
+    p.authors.split(/,|&| and /).forEach(function(a){
+      a=a.trim().replace(/^等$/,'').replace(/\s+/g,' ');
+      if(a.length<3||a.length>50)return;
+      if(a==='et al'||a==='et al.')return;
+      authors[a]=(authors[a]||0)+1;
+    });
+  });
+  var journals={};
+  papers.forEach(function(p){if(p.journal){var j=p.journal.trim();if(j.length>2)journals[j]=(journals[j]||0)+1}});
+  var kws={};
+  var stop=/^(the|a|an|of|and|or|in|on|for|to|with|by|from|as|is|are|be|at|it|this|that|we|our|their|its|his|her|they|them|these|those|between|through|via|using|use|used|can|may|will|would|should|could|not|but|which|who|whom|whose|what|when|where|how|why|than|then|into|over|under|after|before|during|while|more|most|less|least|very|some|any|all|each|every|both|such|same|other|another|one|two|three|first|second|third|new|old|high|low|study|studies|research|based|case|cases|patient|patients|group|groups|associated|risk|effect|effects|association|outcome|outcomes|result|results|finding|findings|analysis|method|methods|data|across|among|were|was|had|has|have|been|being|about|up|down|out|if|so|also|well|only|just|too|much|many|few|small|large|big|little|long|short|good|bad|same|different|similar|specific|general|public|private|common|rare|possible|likely|mental|health|depression|depressive|anxiety|anxious|disorder|disorders|psychiatric|psychological|psychology|clinical|treatment|therapy|intervention|prevention|cohort|cross-sectional|longitudinal|trial|trials|randomized|controlled|factor|factors|measure|measures|scale|scales|score|scores|age|sex|gender|male|female|adult|adults|child|children|adolescent|adolescents|youth|young|older|elderly|people|population|sample|participants|subjects|individuals|total|number|percentage|mean|significantly|significant|differences|difference|higher|lower|increased|decreased|compared|versus|vs|control|baseline|follow-up|followup|month|months|year|years|day|days|week|weeks|time|point|period|phase|stage|level|levels|type|types|category|categories|class|classes|kind|kinds|form|forms|part|parts|section|sections|area|areas|field|fields|domain|domains|aspect|aspects|variable|variables|parameter|parameters|feature|features|characteristic|characteristics|property|properties|attribute|attributes|quality|qualities|quantity|quantities|amount|amounts|count|counts|rate|rates|ratio|ratios|proportion|proportions|percent|fraction|fractions|share|shares|unit|units|element|elements|component|components|item|items|object|objects|entity|entities|thing|things|being|beings|individual|person|persons|human|humans|man|men|woman|women|boy|boys|girl|girls|kid|kids|teen|teens|teenager|teenagers|middle-aged|aged|aging|old|youngest|oldest|introduction|conclusion|discussion|background|objective|aim|aims|purpose|goal|goals|hypothesis|methods|results|limitations|implications|application|funding|acknowledgments|references|author|authors|corresponding|affiliation|affiliations|department|institute|university|college|school|hospital|center|centre|journal|article|volume|issue|page|pages|doi|pmid|pmcid|url|link|abstract|full-text|open-access|copyright|license|published|accepted|received|revised|updated|online|print|digital|object|identifier|pubmed|crossref|semantic|scholar|zenodo|figshare|dryad|gbif|ncbi|nih|who|cdc|unicef|world|organization|organisation|association|society|foundation|institute|national|international|american|european|asian|chinese|china|united|states|uk|us|usa|depression|bipolar|schizophrenia|anxiety|stress|trauma|ptsd|ocd|adhd|autism|suicide|suicidal|self-harm|addiction|substance|alcohol|drug|tobacco|smoking|cognitive|cognition|memory|attention|executive|brain|neuroscience|neuroimaging|fmri|eeg|pet|ct|mri|genetic|genomics|epigenetic|biomarker|inflammatory|immune|endocrine|hormone|cortisol|sleep|circadian|nutrition|diet|exercise|physical|activity|social|support|isolation|loneliness|poverty|socioeconomic|education|employment|workplace|stressful|life|events|childhood|adversity|abuse|violence|neglect|trauma|resilience|coping|mindfulness|meditation|cbt|cognitive-behavioral|behavioral|behavioural|psychotherapy|pharmacotherapy|antidepressant|ssri|snri|antipsychotic|mood|stabilizer| lithium|ketamine|psilocybin|mdma|placebo|sham|randomized|blind|double-blind|single-blind|open-label|parallel|crossover|superiority|non-inferiority|equivalence|pragmatic|cluster|stepped|wedge|adaptive|platform|registry|cohort|case-control|nested|ecological|cross-sectional|longitudinal|prospective|retrospective|follow-up|incidence|prevalence|mortality|morbidity|disability|quality|life|well-being|happiness|satisfaction|functioning|impairment|severity|remission|recovery|relapse|recurrence|chronic|acute|early|late|onset|first-episode|prodromal|at-risk|ultra|subthreshold|threshold|diagnosis|diagnostic|screening|assessment|measurement|instrument|tool|questionnaire|survey|interview|self-report|observer|clinician|rated|scale|index|inventory|profile|checklist|questionnaire|module|domain|subscale|item|factor|loading|reliability|validity|psychometric|norm|cut-off|threshold|sensitivity|specificity|ppv|npv|roc|auc|ci|confidence|interval|or|odds|ratio|rr|relative|risk|hr|hazard|cox|regression|logistic|linear|multilevel|hierarchical|mixed|random|fixed|effect|interaction|confounder|mediator|moderator|covariate|adjustment|sensitivity|analysis|subgroup|meta-analysis|systematic|review|prisma|cohort|panel|fixed|random|heterogeneity|i2|q-statistic|p-value|z-score|t-test|anova|chi-square|nonparametric|wilcoxon|mann-whitney|kruskal-wallis|kaplan|meier|survival|cox|hazard|proportional|landmark|competing|risk|cause-specific|subdistribution|fine|gray|parametric|weibull|exponential|log-normal|gamma|gompertz|joint|frailty|recurrent|multi-state|cure|model|mixture|latent|class|growth|trajectory|group|trajectory|analysis|factor|structural|equation|sem|path|mediation|moderation|interaction|machine|learning|deep|neural|network|cnn|rnn|transformer|attention|supervised|unsupervised|reinforcement|transfer|active|learning|feature|selection|dimensionality|reduction|pca|ica|tsne|umap|clustering|k-means|hierarchical|dbscan|spectral|classification|regression|random|forest|gradient|boosting|xgboost|lightgbm|catboost|svm|support|vector|naive|bayes|knn|nearest|neighbors|decision|tree|ensemble|bagging|stacking|boosting|adaboost|gbm|neural|network|perceptron|mlp|convolutional|recurrent|lstm|gru|autoencoder|vae|gan|transformer|bert|gpt|llm|large|language|model|chatgpt|generative|pretrained|fine-tuning|transfer|learning|federated|differential|privacy|explainable|interpretable|fairness|bias|algorithmic|auditing|validation|verification|reproducibility|replicability|open|science|preregistration|registered|report|guideline|checklist|standard|reporting|trial|consort|strobe|prisma|stard|coreq|grayscale|triage|flow|diagram|enrollment|allocation|follow-up|analysis|intention-to-treat|per-protocol|as-treated|missing|data|imputation|multiple|single|last|observation|carried|forward|locf|baseline|observation|carried|backward|bocf|worst|case|best|case|sensitivity|analysis| tipping|point|unknown|indeterminate|inconclusive|uncertain|caveat|limitation|future|research|direction|implication|practice|policy|recommendation|guideline|consensus|statement|position|white|paper|review|editorial|commentary|perspective|viewpoint|opinion|letter|correspondence|erratum|corrigendum|retraction|expression|concern)$/i;
+  papers.forEach(function(p){
+    if(!p.title)return;
+    var words=p.title.toLowerCase().replace(/[^a-z\s\-]/g,' ').split(/\s+/);
+    words.forEach(function(w){
+      w=w.trim();
+      if(w.length<4||stop.test(w))return;
+      kws[w]=(kws[w]||0)+1;
+    });
+  });
+  var sortFn=function(o){return Object.keys(o).map(function(k){return[k,o[k]]}).sort(function(a,b){return b[1]-a[1]})};
+  var ys=Object.keys(years).map(Number).filter(function(n){return !isNaN(n)});
+  return {
+    total:papers.length,
+    years:sortFn(years).slice(0,12),
+    authors:sortFn(authors).slice(0,10),
+    journals:sortFn(journals).slice(0,10),
+    keywords:sortFn(kws).slice(0,15),
+    withCitations:papers.filter(function(p){return p.citations>0}).length,
+    yearRange:ys.length?(Math.min.apply(null,ys)+' - '+Math.max.apply(null,ys)):'未知'
+  };
+}
+
+function matchLocalDatasets(q,kws){
+  var all=window.KNOWN_DATASETS||[];
+  var ql=q.toLowerCase();
+  var kwset={};(kws||[]).forEach(function(k){kwset[k[0]]=1});
+  var scored=all.map(function(d){
+    var txt=((d.title||'')+' '+(d.en||'')+' '+(d.summary||'')+' '+(d.tag||'')).toLowerCase();
+    var score=0;
+    ql.split(/\s+/).forEach(function(t){if(t.length>2&&txt.indexOf(t)>=0)score+=2});
+    Object.keys(kwset).forEach(function(k){if(k.length>3&&txt.indexOf(k)>=0)score+=1});
+    return {d:d,score:score};
+  });
+  return scored.filter(function(x){return x.score>0}).sort(function(a,b){return b.score-a.score}).slice(0,8).map(function(x){return x.d});
+}
+
+function buildAgentReport(q,yMin,papers,datasets,stats,related){
+  var md='';
+  md+='# 智能分析报告：'+q+'\n\n';
+  md+='**生成时间**：'+new Date().toLocaleString('zh-CN')+'  \n';
+  md+='**数据源**：PubMed · Crossref · Semantic Scholar · Zenodo\n\n';
+  md+='## 摘要\n\n';
+  md+='本次分析围绕「'+q+'」，共爬取到 **'+papers.length+' 篇文献** 和 **'+datasets.length+' 个公开数据集**。';
+  md+='文献年份范围：'+stats.yearRange+'。';
+  md+='其中 '+stats.withCitations+' 篇有引用数据。\n\n';
+  md+='## 关键发现\n\n';
+  if(stats.keywords.length>0){
+    md+='**高频关键词**：'+stats.keywords.slice(0,8).map(function(k){return '`'+k[0]+'`('+k[1]+')'}).join('、')+'\n\n';
+  }
+  if(stats.authors.length>0){
+    md+='**主要研究者**：'+stats.authors.slice(0,5).map(function(a){return a[0]+'('+a[1]+')'}).join('、')+'\n\n';
+  }
+  if(stats.journals.length>0){
+    md+='**主要发表期刊**：\n';
+    stats.journals.slice(0,5).forEach(function(j){md+='- '+j[0]+' ('+j[1]+' 篇)\n'});
+    md+='\n';
+  }
+  if(stats.years.length>0){
+    md+='**年份分布**：\n';
+    stats.years.slice(0,8).forEach(function(y){md+='- '+y[0]+': '+y[1]+' 篇\n'});
+    md+='\n';
+  }
+  var topCited=papers.filter(function(p){return p.citations>0}).sort(function(a,b){return b.citations-a.citations}).slice(0,5);
+  if(topCited.length>0){
+    md+='## 高被引论文 Top 5\n\n';
+    topCited.forEach(function(p,i){
+      md+=(i+1)+'. **'+(p.title||'无标题').slice(0,150)+'**\n';
+      md+='   - 作者：'+(p.authors||'未知')+'\n';
+      md+='   - 期刊：'+(p.journal||'未知')+' ('+(p.year||'-')+')\n';
+      md+='   - 被引：'+(p.citations||0)+'  ·  '+(p.doi?('DOI: '+p.doi):'')+'\n';
+      if(p.url)md+='   - 链接：'+p.url+'\n';
+      md+='\n';
+    });
+  }
+  if(datasets.length>0){
+    md+='## 爬取到的公开数据集（Zenodo）\n\n';
+    datasets.slice(0,5).forEach(function(d){
+      md+='- **'+(d.title||'').slice(0,120)+'**\n';
+      if(d.authors)md+='  - 作者：'+d.authors+'\n';
+      if(d.doi)md+='  - DOI: '+d.doi+'\n';
+      if(d.url)md+='  - 链接：'+d.url+'\n';
+      md+='\n';
+    });
+  }
+  if(related.length>0){
+    md+='## 关联本地数据集（已收录）\n\n';
+    related.forEach(function(d){
+      md+='- **'+d.title+'** ('+d.en+')';
+      if(d.summary)md+='  - '+(d.summary||'').slice(0,150);
+      md+='\n';
+    });
+    md+='\n';
+  }
+  md+='## 研究建议\n\n';
+  md+='1. **优先阅读**：高被引论文 Top 5，特别是近 5 年的文献。\n';
+  md+='2. **关注作者**：'+(stats.authors[0]?stats.authors[0][0]:'主要研究者')+' 等高产作者，追踪其最新工作。\n';
+  md+='3. **数据获取**：可从 Zenodo 爬取的数据集中获取原始数据，或从关联本地数据集中申请。\n';
+  md+='4. **研究空白**：根据高频关键词和年份分布，识别尚未充分研究的方向。\n\n';
+  md+='---\n*本报告由 Research Data Hub 智能分析助手自动生成，数据均来自公开学术数据库。*\n';
+  return md;
+}
+
+function renderAgentReport(papers,datasets,stats,related,md){
+  renderBarChart('agent-year-chart',stats.years);
+  renderBarChart('agent-author-chart',stats.authors);
+  renderBarChart('agent-journal-chart',stats.journals);
+  renderBarChart('agent-keyword-chart',stats.keywords);
+  var topCited=papers.filter(function(p){return p.citations>0}).sort(function(a,b){return b.citations-a.citations}).slice(0,10);
+  var el=document.getElementById('agent-top-papers');
+  if(topCited.length===0){
+    el.innerHTML='<div style="color:var(--muted)">无被引数据（Crossref/S2 才提供引用数）</div>';
+  }else{
+    el.innerHTML='<ol>'+topCited.map(function(p){
+      return '<li><div>'+(p.title||'无标题').slice(0,200)+'</div><div class="meta">'+(p.authors||'').slice(0,80)+' · '+(p.journal||'')+' '+(p.year||'')+' · 被引 '+(p.citations||0)+'</div></li>';
+    }).join('')+'</ol>';
+  }
+  var dsEl=document.getElementById('agent-datasets');
+  if(related.length===0){
+    dsEl.innerHTML='<div style="color:var(--muted)">未匹配到本地数据集</div>';
+  }else{
+    dsEl.innerHTML=related.map(function(d){
+      return '<div class="ds-row"><b>'+d.title+'</b> ('+(d.en||'')+')<div style="color:var(--muted);font-size:12px;margin-top:2px">'+(d.summary||'').slice(0,200)+'</div></div>';
+    }).join('');
+  }
+  document.getElementById('agent-md').textContent=md;
+}
+
+function renderBarChart(elId,data){
+  var el=document.getElementById(elId);
+  if(!data||data.length===0){el.innerHTML='<div style="color:var(--muted);font-size:12px">无数据</div>';return}
+  var max=data[0][1];
+  el.innerHTML=data.map(function(d){
+    var pct=Math.round(100*d[1]/max);
+    return '<div class="bar-row">'+
+           '<span class="bar-label" title="'+String(d[0]).replace(/"/g,'&quot;')+'">'+d[0]+'</span>'+
+           '<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div>'+
+           '<span class="bar-val">'+d[1]+'</span>'+
+           '</div>';
+  }).join('');
+}
+
+function downloadAgentReport(){
+  if(!AGENT_LAST){alert('请先运行智能分析');return}
+  var blob=new Blob([AGENT_LAST.report],{type:'text/markdown'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='agent_report_'+AGENT_LAST.query.replace(/[^a-zA-Z0-9]/g,'_').slice(0,30)+'_'+Date.now()+'.md';
+  a.click();
+}
+
+function saveAgentReport(){
+  if(!AGENT_LAST){alert('请先运行智能分析');return}
+  libAdd({
+    type:'agent_report',
+    title:'智能分析：'+AGENT_LAST.query,
+    source:'Agent',
+    year:new Date().getFullYear()+'',
+    report:AGENT_LAST.report.slice(0,5000)
+  });
+  alert('已收藏到「我的收藏」');
+}
+
+function loadAgentDataToAnalyze(){
+  if(!AGENT_LAST||!AGENT_LAST.papers.length){alert('请先运行智能分析');return}
+  var rows=AGENT_LAST.papers.map(function(p){
+    return {
+      title:p.title||'',year:p.year||'',journal:p.journal||'',
+      authors:p.authors||'',citations:p.citations||0,
+      source:p.source||'',doi:p.doi||'',pmid:p.pmid||''
+    };
+  });
+  var vars=['title','year','journal','authors','citations','source','doi','pmid'];
+  var types={title:'character',year:'integer',journal:'character',authors:'character',citations:'integer',source:'character',doi:'character',pmid:'character'};
+  DATA={rows:rows,df:null,dict:{},meta:{name:'agent_papers.csv'},types:types};
+  DATA_VARS=vars;DATA_ROWS=rows.length;
+  RS_FILES.push({name:'agent_papers.csv',rows:rows.length,vars:vars.length,time:Date.now()});
+  go('analyze');
+  setTimeout(function(){
+    rsLog('📊 已加载智能分析爬取的 '+rows.length+' 篇文献数据','ok');
+    if(typeof rsRenderFileList==='function') rsRenderFileList();
+    rsRefreshEnv();
+    var ed=document.getElementById('rs-code');
+    if(ENGINE==='py'){
+      ed.value='# 智能分析爬取的文献数据 ('+rows.length+' 篇)\nprint(DF.shape)\nprint(DF.dtypes)\nprint(DF[\'citations\'].describe())\nprint(DF.groupby(\'year\').size().sort_index())';
+    }else{
+      ed.value='# 智能分析爬取的文献数据 ('+rows.length+' 篇)\nprint(dim(.df))\nprint(summary(.df))\nprint(table(.df$year))';
+    }
+  },300);
+}
+
 /* ========= INIT ========= */
 window.addEventListener('hashchange',function(){
   var p=(location.hash||'#/home').replace('#/','');
-  if(['home','search','analyze','library','about'].indexOf(p)>=0) go(p);
+  if(['home','search','agent','analyze','library','about'].indexOf(p)>=0) go(p);
 });
 function init(){
   renderHomeStats();
   var p=(location.hash||'#/home').replace('#/','');
-  if(['home','search','analyze','library','about'].indexOf(p)>=0) go(p);
+  if(['home','search','agent','analyze','library','about'].indexOf(p)>=0) go(p);
   document.getElementById('q').addEventListener('keydown',function(e){ if(e.key==='Enter') doSearch(); });
   var ed=document.getElementById('rs-code');
   if(ed){ed.addEventListener('keydown',function(e){
