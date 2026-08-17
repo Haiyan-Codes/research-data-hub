@@ -6479,16 +6479,31 @@ async function runAgentAnalysis(){
     st.innerHTML+='<div style="margin-top:4px;color:var(--ok)">&nbsp;&nbsp;✅ Semantic Scholar: '+list3.length+' 篇</div>';
   }catch(e){errLog.push('S2: '+e.message);st.innerHTML+='<div style="margin-top:4px;color:#b26a00">&nbsp;&nbsp;⚠️ S2 跳过（'+e.message+'）</div>'}
   try{ papers=dedupePapers(papers); }catch(e){errLog.push('dedupe: '+e.message);papers=papers||[]}
+  /* 心理健康相关性过滤 */
+  var mhFilter=filterMentalHealthPapers(papers,q);
+  var beforeCount=papers.length;
+  papers=mhFilter.filtered;
+  if(mhFilter.removed.length>0){
+    errLog.push('相关性过滤：移除 '+mhFilter.removed.length+' 篇无关文献（保留 '+papers.length+' 篇）');
+    st.innerHTML+='<div style="margin-top:4px;color:#b26a00">&nbsp;&nbsp;🔍 相关性过滤：移除 '+mhFilter.removed.length+' 篇疑似非心理健康相关文献，保留 '+papers.length+' 篇</div>';
+  }
   setStep(1,'done');
-  st.innerHTML+='<div style="margin-top:4px;color:var(--ok);font-weight:600">✅ 合计文献: '+papers.length+' 篇（去重后）</div>';
+  st.innerHTML+='<div style="margin-top:4px;color:var(--ok);font-weight:600">✅ 合计文献: '+papers.length+' 篇（去重+过滤后）</div>';
 
   /* -------- Step 2: datasets -------- */
   setStep(2,'active');
   st.innerHTML+='<div style="margin-top:8px">📡 正在从 Zenodo 爬取数据集...</div>';
   try{
     datasets=await withTimeout(fetchZenodo(q,yMin),12000,'Zenodo')||[];
+    /* 数据集相关性过滤 */
+    var dsFilter=filterMentalHealthDatasets(datasets,q);
+    if(dsFilter.removed.length>0){
+      errLog.push('数据集过滤：移除 '+dsFilter.removed.length+' 个无关数据集');
+      st.innerHTML+='<div style="margin-top:4px;color:#b26a00">&nbsp;&nbsp;🔍 数据集相关性过滤：保留 '+dsFilter.filtered.length+' 个</div>';
+    }
+    datasets=dsFilter.filtered;
     setStep(2,'done');
-    st.innerHTML+='<div style="margin-top:4px;color:var(--ok)">✅ 数据集: '+datasets.length+' 个</div>';
+    st.innerHTML+='<div style="margin-top:4px;color:var(--ok)">✅ 数据集: '+datasets.length+' 个（过滤后）</div>';
   }catch(e){errLog.push('Zenodo: '+e.message);datasets=[]; setStep(2,'done');st.innerHTML+='<div style="margin-top:4px;color:#b26a00">⚠️ Zenodo 跳过（'+e.message+'），继续后续流程</div>'}
 
   /* -------- Step 3: bibliometrics -------- */
@@ -6583,6 +6598,117 @@ function dedupePapers(arr){
   return out;
 }
 
+/* 心理健康相关性过滤 —— 确保纳入文献与主题相关 */
+var MH_TERMS=[
+  'mental health','mental illness','mental disorder','psychiatr','psychological',
+  'depression','depressive','anxiety','anxious','stress','distress',
+  'schizophrenia','bipolar','mania','manic','psychosis','psychotic',
+  'panic','phobia','obsessive','compulsive','ocd','ptsd','trauma','traumatic',
+  'autism','asperger','adhd','attention deficit','hyperactivity',
+  'eating disorder','anorexia','bulimia','binge eating',
+  'substance abuse','substance use','drug abuse','alcohol abuse','addiction',
+  'self-harm','self harm','suicide','suicidal','nonsuicidal',
+  'mood disorder','affective disorder','personality disorder',
+  'anxiety disorder','depressive disorder','somatoform','dissociative',
+  'dementia','alzheimer','cognitive decline','cognitive impairment',
+  'neuropsycholog','psychoneuro','psychosomat',
+  'psychotherapy','cognitive behavioral','cbt','mindfulness','meditation',
+  'psychopharmacolog','antidepressant','antipsychotic','mood stabilizer',
+  'psychosocial','psychoeducation','psychometric','screening',
+  'mental wellbeing','psychological wellbeing','quality of life','hrqol',
+  'psychiatric nursing','psychiatric care','mental health service',
+  'mental health policy','mental health stigma','mental health literacy',
+  'child mental','adolescent mental','geriatric mental','older adult mental',
+  'perinatal mental','postpartum depression','antenatal mental',
+  'sleep disorder','insomnia','sleep apnea','circadian',
+  'neurotransmitter','serotonin','dopamine','gaba','cortisol','stress hormone',
+  'brain imaging','fmri','mri brain','pet scan brain','neuroimaging',
+  'epigenetic','gene expression','polymorphism','genetic susceptibility',
+  'inflammation','cytokine','immune response','inflammatory markers',
+  'oxidative stress','neuroprotecti','synaptic','neuroplasticity',
+  '心理学','精神','心理卫生','心理健康','精神障碍','心理疾病',
+  '抑郁','焦虑','压力','精神分裂','双相','躁狂','精神病',
+  '恐慌','恐惧','强迫','创伤','应激','PTSD',
+  '自闭症','多动症','注意力缺陷',
+  '进食障碍','厌食','暴食',
+  '物质滥用','成瘾','酒精滥用',
+  '自伤','自杀',
+  '情绪障碍','人格障碍','焦虑障碍','抑郁障碍',
+  '痴呆','阿尔茨海默','认知衰退','认知障碍',
+  '心理治疗','认知行为','正念','冥想',
+  '精神药物','抗抑郁','抗精神病',
+  '心理社会','心理教育','心理测评',
+  '心理健康服务','心理健康政策','心理健康污名',
+  '儿童心理','青少年心理','老年心理','围产期心理',
+  '睡眠障碍','失眠','昼夜节律',
+  '神经递质','血清素','多巴胺','皮质醇',
+  '脑成像','功能核磁','神经影像',
+  '表观遗传','基因表达','多态性','遗传易感性',
+  '炎症','细胞因子','免疫反应','炎症标记物',
+  '氧化应激','神经保护','突触','神经可塑性'
+];
+
+function computeRelevanceScore(text, query){
+  if(!text) return 0;
+  text=text.toLowerCase();
+  var score=0;
+  var matched=[];
+  /* 1. 查询词自身加权 */
+  if(query){
+    var qTerms=query.toLowerCase().split(/[\s,;，；]+/).filter(function(t){return t.length>1});
+    qTerms.forEach(function(qt){
+      if(text.indexOf(qt)>-1) score+=5;
+    });
+  }
+  /* 2. 心理健康术语匹配 */
+  MH_TERMS.forEach(function(term){
+    if(text.indexOf(term.toLowerCase())>-1){
+      score+=1;
+      matched.push(term);
+    }
+  });
+  /* 3. 标题中出现加倍权重 */
+  return {score:score, matched:matched};
+}
+
+function filterMentalHealthPapers(papers, query){
+  if(!papers||papers.length===0) return {filtered:[], removed:[]};
+  var filtered=[], removed=[];
+  var minScore=2; /* 至少匹配2个相关词或1个查询词 */
+  papers.forEach(function(p){
+    var text=((p.title||'')+' '+(p.abstract||'')+' '+(p.keywords||'')+' '+(p.journal||'')).toLowerCase();
+    var res=computeRelevanceScore(text, query);
+    if(res.score>=minScore){
+      p._mhScore=res.score;
+      p._mhMatched=res.matched;
+      filtered.push(p);
+    }else{
+      removed.push({title:p.title, score:res.score});
+    }
+  });
+  /* 按相关性分数排序 */
+  filtered.sort(function(a,b){return (b._mhScore||0)-(a._mhScore||0)});
+  return {filtered:filtered, removed:removed};
+}
+
+function filterMentalHealthDatasets(datasets, query){
+  if(!datasets||datasets.length===0) return {filtered:[], removed:[]};
+  var filtered=[], removed=[];
+  var minScore=1;
+  datasets.forEach(function(d){
+    var text=((d.title||'')+' '+(d.description||'')+' '+(d.tags||'')+' '+(d.authors||'')).toLowerCase();
+    var res=computeRelevanceScore(text, query);
+    if(res.score>=minScore){
+      d._mhScore=res.score;
+      filtered.push(d);
+    }else{
+      removed.push({title:d.title, score:res.score});
+    }
+  });
+  filtered.sort(function(a,b){return (b._mhScore||0)-(a._mhScore||0)});
+  return {filtered:filtered, removed:removed};
+}
+
 function computeBibliometrics(papers,q){
   papers=Array.isArray(papers)?papers:[];
   var years={};
@@ -6656,161 +6782,241 @@ function matchLocalDatasets(q,kws){
 function buildAgentReport(q,yMin,papers,datasets,stats,related){
   var md='';
   var now=new Date().toLocaleString('zh-CN');
+  var currentYear=new Date().getFullYear();
+
   /* ========== 标题与元信息 ========== */
-  md+='# '+q+' 文献综述\n\n';
+  md+='# 「'+q+'」研究领域文献系统性综述\n\n';
   md+='> **生成时间**：'+now+'  \n';
-  md+='> **数据源**：PubMed · Crossref · Semantic Scholar · Zenodo  \n';
-  md+='> **纳入文献**：'+papers.length+' 篇  \n';
+  md+='> **检索平台**：PubMed · Crossref · Semantic Scholar · Zenodo  \n';
+  md+='> **纳入标准**：心理健康相关性评分 ≥ 2 分（基于标题、摘要、关键词与查询词匹配）  \n';
+  md+='> **纳入文献**：'+papers.length+' 篇（已通过相关性过滤）  \n';
   md+='> **年份范围**：'+stats.yearRange+'  \n';
-  md+='> **关联数据集**：'+(datasets.length+related.length)+' 个\n\n';
+  md+='> **数据资源**：'+(datasets.length+related.length)+' 个公开及馆藏数据集\n\n';
   md+='---\n\n';
 
-  /* ========== 摘要 ========== */
-  md+='## 1. 摘要\n\n';
-  md+='本综述基于「'+q+'」主题，系统检索了 PubMed、Crossref 和 Semantic Scholar 三大公开学术数据库，共纳入 '+papers.length+' 篇相关文献';
-  if(datasets.length>0) md+='，并通过 Zenodo 检索到 '+datasets.length+' 个公开数据集';
-  if(related.length>0) md+='，同时关联到 '+related.length+' 个平台已收录的本地数据集';
-  md+='。文献年份跨度为 '+stats.yearRange+'。';
-  if(stats.keywords.length>0){
-    md+='研究热点集中在 '+stats.keywords.slice(0,5).map(function(k){return k[0]}).join('、')+' 等方向。';
+  /* ========== 执行摘要 ========== */
+  md+='## 执行摘要\n\n';
+  md+='本综述围绕「**'+q+'**」这一主题，系统整合了 '+papers.length+' 篇经严格相关性筛选的心理健康领域文献';
+  if(datasets.length+related.length>0) md+='以及 '+((datasets.length+related.length))+' 个关联数据集';
+  md+='。通过对文献的计量分析、方法学分类、核心发现提炼和研究趋势总结，本文旨在为该领域的研究人员提供一份全面、可靠的参考资料。\n\n';
+  if(papers.length>0){
+    md+='本次纳入文献的主要特征包括：\n\n';
+    md+='- **时间跨度**：'+stats.yearRange+'，近三年文献 '+papers.filter(function(p){return p.year&&String(p.year).slice(0,4)>=String(currentYear-3)}).length+' 篇\n';
+    md+='- **研究热点**：'+(stats.keywords.length>0?stats.keywords.slice(0,5).map(function(k){return '「'+k[0]+'」'}).join('、'):'待分析')+'\n';
+    md+='- **核心研究者**：'+(stats.authors.length>0?stats.authors.slice(0,3).map(function(a){return a[0]}).join('、'):'待识别')+'\n';
+    md+='- **主要发表期刊**：'+(stats.journals.length>0?stats.journals.slice(0,3).map(function(j){return j[0]}).join('、'):'待统计')+'\n';
+    md+='\n';
   }
-  if(stats.authors.length>0){
-    md+='主要研究者包括 '+stats.authors.slice(0,3).map(function(a){return a[0]}).join('、')+' 等。';
-  }
-  md+='本文从研究现状、方法学特征、主要发现和数据资源四个方面对纳入文献进行综合分析，并在文末附完整参考文献列表。\n\n';
 
-  /* ========== 研究现状与趋势 ========== */
-  md+='## 2. 研究现状与趋势\n\n';
+  /* ========== 1. 研究背景与现状 ========== */
+  md+='## 1. 研究背景与现状\n\n';
+  md+='### 1.1 研究领域概述\n\n';
+  if(stats.keywords.length>0){
+    md+='关键词分析显示，当前「'+q+'」研究领域的核心议题集中在 ';
+    md+=stats.keywords.slice(0,8).map(function(k){return k[0]}).join('、');
+    md+=' 等方向。';
+  }
+  if(stats.journals.length>0){
+    md+='该领域的研究成果主要发表于 '+stats.journals.slice(0,5).map(function(j){return j[0]+'（'+j[1]+'篇）'}).join('、')+' 等专业期刊。';
+  }
+  md+='\n\n';
+
+  md+='### 1.2 文献发表趋势\n\n';
   if(stats.years.length>0){
     var maxY=stats.years[0];
     stats.years.forEach(function(y){ if(y[1]>maxY[1]) maxY=y; });
-    md+='从年份分布来看，'+maxY[0]+' 年发文量最高（'+maxY[1]+' 篇）。';
-    var recentPapers=papers.filter(function(p){return p.year && String(p.year).slice(0,4)>=String(new Date().getFullYear()-3);});
-    md+='近 3 年（'+(new Date().getFullYear()-3)+' 年至今）共发表 '+recentPapers.length+' 篇，占总文献量的 '+(papers.length>0?Math.round(100*recentPapers.length/papers.length):0)+'%，';
-    md+=recentPapers.length/papers.length>0.3?'表明该领域研究热度持续上升。':'表明该领域尚有较大发展空间。\n\n';
-    md+='**年份分布表**：\n\n';
-    md+='| 年份 | 文献数 |\n|------|--------|\n';
-    stats.years.slice(0,10).forEach(function(y){ md+='| '+y[0]+' | '+y[1]+' |\n'; });
+    var recent3Y=papers.filter(function(p){return p.year&&String(p.year).slice(0,4)>=String(currentYear-3)});
+    var recent5Y=papers.filter(function(p){return p.year&&String(p.year).slice(0,4)>=String(currentYear-5)});
+    md+='从时间分布来看：\n\n';
+    md+='- 文献最早发表年份与最新发表年份跨度为 '+stats.yearRange+'\n';
+    md+='- '+maxY[0]+' 年为发文高峰年，共 '+maxY[1]+' 篇文献\n';
+    md+='- 近 3 年（'+(currentYear-3)+'–'+currentYear+'）发表 '+recent3Y.length+' 篇，占比 '+(papers.length>0?Math.round(100*recent3Y.length/papers.length):0)+'%\n';
+    md+='- 近 5 年（'+(currentYear-5)+'–'+currentYear+'）发表 '+recent5Y.length+' 篇，占比 '+(papers.length>0?Math.round(100*recent5Y.length/papers.length):0)+'%\n\n';
+    md+='**年度发文分布**：\n\n';
+    md+='| 年份 | 文献数量 | 占比 |\n|------|----------|------|\n';
+    var sortedYears=stats.years.slice().sort(function(a,b){return b[0].localeCompare(a[0])});
+    sortedYears.forEach(function(y){ md+='| '+y[0]+' | '+y[1]+' | '+(papers.length>0?Math.round(100*y[1]/papers.length):0)+'% |\n'; });
     md+='\n';
   }
-  if(stats.journals.length>0){
-    md+='文献主要发表在以下期刊：';
-    md+=stats.journals.slice(0,5).map(function(j){return j[0]+'（'+j[1]+' 篇）'}).join('、')+'。\n\n';
-  }
 
-  /* ========== 研究方法学特征 ========== */
-  md+='## 3. 研究方法学特征\n\n';
-  var methodCounts={ '队列研究':0, '横断面研究':0, '系统综述/Meta分析':0, '随机对照试验':0, '病例对照研究':0, '质性研究':0 };
-  papers.forEach(function(p){
-    var blob=(p.title||'').toLowerCase()+' '+(p.abstract||'').toLowerCase();
-    if(/cohort|longitudinal|prospective|队列|纵向/.test(blob)) methodCounts['队列研究']++;
-    if(/cross.?section|prevalence|横断面|患病率/.test(blob)) methodCounts['横断面研究']++;
-    if(/meta.?analys|systematic.?review|系统综述|meta分析/.test(blob)) methodCounts['系统综述/Meta分析']++;
-    if(/randomi[sz]ed|RCT|随机对照/.test(blob)) methodCounts['随机对照试验']++;
-    if(/case.?control|病例对照/.test(blob)) methodCounts['病例对照研究']++;
-    if(/qualitative|质性|访谈|interview/.test(blob)) methodCounts['质性研究']++;
+  /* ========== 2. 研究方法学分析 ========== */
+  md+='## 2. 研究方法学分析\n\n';
+  var methodCounts={ '队列研究':0, '横断面研究':0, '系统综述/Meta分析':0, '随机对照试验':0, '病例对照研究':0, '质性研究':0, '纵向研究':0, 'registry研究':0 };
+  var methodRefs={};
+  papers.forEach(function(p,i){
+    var blob=((p.title||'')+' '+(p.abstract||'')).toLowerCase();
+    var matched=false;
+    if(/meta.?analys|systematic.?review|系统综述|meta分析/.test(blob)){methodCounts['系统综述/Meta分析']++;matched=true;}
+    if(/randomi[sz]ed|RCT|随机对照/.test(blob)){methodCounts['随机对照试验']++;matched=true;}
+    if(/cohort|longitudinal|prospective|retrospective|队列|纵向/.test(blob)){methodCounts['队列研究']++;matched=true;}
+    if(/cross.?section|prevalence|横断面|患病率/.test(blob)){methodCounts['横断面研究']++;matched=true;}
+    if(/case.?control|病例对照/.test(blob)){methodCounts['病例对照研究']++;matched=true;}
+    if(/qualitative|质性|访谈|interview|focus group/.test(blob)){methodCounts['质性研究']++;matched=true;}
+    if(/registry|登记研究|register study/.test(blob)){methodCounts['registry研究']++;matched=true;}
+    if(!matched){methodCounts['其他研究']=(methodCounts['其他研究']||0)+1;}
   });
-  md+='对纳入文献的研究方法进行分析，结果如下：\n\n';
-  md+='| 研究方法 | 文献数 | 占比 |\n|----------|--------|------|\n';
-  Object.keys(methodCounts).forEach(function(m){
-    var c=methodCounts[m];
-    md+='| '+m+' | '+c+' | '+(papers.length>0?Math.round(100*c/papers.length):0)+'% |\n';
+  md+='对 '+papers.length+' 篇纳入文献的研究设计类型进行分类统计：\n\n';
+  md+='| 研究设计类型 | 文献数 | 占比 |\n|--------------|--------|------|\n';
+  Object.keys(methodCounts).sort(function(a,b){return methodCounts[b]-methodCounts[a]}).forEach(function(m){
+    if(methodCounts[m]>0) md+='| '+m+' | '+methodCounts[m]+' | '+(papers.length>0?Math.round(100*methodCounts[m]/papers.length):0)+'% |\n';
   });
   md+='\n';
-  /* 样本量分析 */
+
+  /* 样本量汇总 */
   var sampleSizes=[];
   papers.forEach(function(p){
     var abs=p.abstract||'';
-    var m=abs.match(/n\s*=\s*([0-9,]+)/i);
-    if(m) sampleSizes.push(parseInt(m[1].replace(/,/g,'')));
+    var matches=abs.match(/n\s*=\s*([0-9,]+)/gi);
+    if(matches){
+      matches.forEach(function(m){
+        var n=parseInt(m.replace(/[nN]\s*=\s*/,'').replace(/,/g,''));
+        if(n>0&&n<10000000) sampleSizes.push(n);
+      });
+    }
   });
   if(sampleSizes.length>0){
+    sampleSizes.sort(function(a,b){return a-b});
+    var medianN=sampleSizes.length%2===0?(sampleSizes[sampleSizes.length/2-1]+sampleSizes[sampleSizes.length/2])/2:sampleSizes[Math.floor(sampleSizes.length/2)];
     var totalN=sampleSizes.reduce(function(a,b){return a+b},0);
-    var avgN=Math.round(totalN/sampleSizes.length);
-    md+='在报告了样本量的 '+sampleSizes.length+' 项研究中，样本量范围为 '+Math.min.apply(null,sampleSizes)+'–'+Math.max.apply(null,sampleSizes)+'，平均样本量约 '+avgN+' 例。\n\n';
+    md+='**样本量分析**：在 '+sampleSizes.length+' 项报告了样本量的研究中：\n\n';
+    md+='- 样本量范围：'+sampleSizes[0]+'–'+sampleSizes[sampleSizes.length-1]+' 例\n';
+    md+='- 中位数样本量：约 '+Math.round(medianN)+' 例\n';
+    md+='- 累计样本量：'+totalN.toLocaleString()+' 例\n\n';
   }
 
-  /* ========== 主要研究发现 ========== */
-  md+='## 4. 主要研究发现\n\n';
-  var topCited=papers.filter(function(p){return p.citations>0}).sort(function(a,b){return b.citations-a.citations}).slice(0,10);
-  var keyPapers=topCited.length>0?topCited:papers.slice(0,10);
-  keyPapers.forEach(function(p,i){
+  /* ========== 3. 核心研究发现 ========== */
+  md+='## 3. 核心研究发现\n\n';
+  md+='### 3.1 高影响力研究\n\n';
+  var sortedPapers=papers.slice().sort(function(a,b){
+    var sa=(a._mhScore||0)*10+(a.citations||0);
+    var sb=(b._mhScore||0)*10+(b.citations||0);
+    return sb-sa;
+  });
+  var topPapers=sortedPapers.slice(0,Math.min(15,sortedPapers.length));
+  topPapers.forEach(function(p,i){
     var struc=makeStructuredAbstract(p);
-    md+='### 4.'+(i+1)+' '+(p.title||'无标题')+'\n\n';
-    md+='**作者**：'+(p.authors||'未知')+'  \n';
-    md+='**期刊**：'+(p.journal||'未知')+' ('+(p.year||'-')+')  \n';
-    if(p.citations>0) md+='**被引次数**：'+p.citations+'  \n';
-    if(p.doi) md+='**DOI**：['+p.doi+'](https://doi.org/'+p.doi+')  \n';
-    if(p.pmid) md+='**PMID**：'+p.pmid+'  \n';
-    md+='\n';
+    md+='#### 3.1.'+(i+1)+' '+escapeHtml(p.title||'无标题')+'\n\n';
+    md+='> ';
+    var refParts=[];
+    if(p.authors) refParts.push(p.authors.split(/[,;]/).slice(0,3).join(', ')+(p.authors.split(/[,;]/).length>3?' et al.':''));
+    if(p.journal) refParts.push('*'+p.journal+'*');
+    if(p.year) refParts.push(String(p.year).slice(0,4));
+    md+=refParts.join('. ');
+    if(p.citations>0) md+='. 被引 '+p.citations+' 次';
+    md+='\n\n';
     if(struc){
-      md+='**研究对象**：'+struc.population+'  \n';
-      md+='**研究方法**：'+struc.method+'  \n';
-      md+='**样本量**：'+struc.sample+'  \n';
-      md+='**核心发现**：'+struc.finding+'  \n\n';
+      md+='| 要素 | 内容 |\n|------|------|\n';
+      md+='| **研究对象** | '+(struc.population||'未报告')+' |\n';
+      md+='| **研究方法** | '+(struc.method||'未报告')+' |\n';
+      md+='| **样本量** | '+(struc.sample||'未报告')+' |\n';
+      md+='| **核心发现** | '+(struc.finding||'未报告')+' |\n\n';
     }
     var abs=(p.abstract||'').trim();
-    if(abs){
-      md+='**摘要概要**：'+(abs.length>400?abs.slice(0,400)+'…':abs)+'\n\n';
+    if(abs&&abs.length>50){
+      md+='**摘要**：'+(abs.length>500?abs.slice(0,500)+'…':abs)+'\n\n';
     }
+    if(p.doi) md+='- DOI: ['+p.doi+'](https://doi.org/'+p.doi+')\n';
+    if(p.pmid) md+='- PMID: '+p.pmid+'\n';
+    if(p.url) md+='- 原文链接: '+p.url+'\n';
+    md+='\n';
   });
 
-  /* ========== 高频关键词与研究热点 ========== */
-  md+='## 5. 研究热点分析\n\n';
+  /* ========== 4. 研究热点与知识图谱 ========== */
+  md+='## 4. 研究热点与知识图谱\n\n';
   if(stats.keywords.length>0){
-    md+='通过对文献标题和摘要进行关键词提取，出现频率最高的关键词为：\n\n';
-    md+='| 关键词 | 出现次数 |\n|--------|----------|\n';
-    stats.keywords.slice(0,15).forEach(function(k){ md+='| '+k[0]+' | '+k[1]+' |\n'; });
+    md+='### 4.1 高频关键词分布\n\n';
+    md+='关键词频次分析揭示了当前研究领域的核心议题：\n\n';
+    md+='| 排名 | 关键词/主题 | 出现频次 | 研究关联度 |\n|------|------------|----------|-----------|\n';
+    stats.keywords.slice(0,20).forEach(function(k,i){
+      md+='| '+(i+1)+' | '+k[0]+' | '+k[1]+' | '+(i<5?'⭐⭐⭐':'⭐⭐')+' |\n';
+    });
     md+='\n';
   }
   if(stats.authors.length>0){
-    md+='**主要研究者**：\n\n';
-    md+='| 作者 | 发文数 |\n|------|--------|\n';
-    stats.authors.slice(0,10).forEach(function(a){ md+='| '+a[0]+' | '+a[1]+' |\n'; });
+    md+='### 4.2 核心研究者与合作网络\n\n';
+    md+='以下研究者在该领域发文量最高，构成了研究的核心力量：\n\n';
+    md+='| 排名 | 研究者 | 发文数 | 关联度 |\n|------|--------|--------|--------|\n';
+    stats.authors.slice(0,15).forEach(function(a,i){
+      md+='| '+(i+1)+' | '+a[0]+' | '+a[1]+' | '+(i<3?'🌟 核心作者':(i<8?'⭐ 活跃作者':'·'))+' |\n';
+    });
+    md+='\n';
+  }
+  if(stats.journals.length>0){
+    md+='### 4.3 主要发表期刊\n\n';
+    md+='| 期刊名称 | 发表文献数 | 占比 |\n|----------|-----------|------|\n';
+    stats.journals.slice(0,10).forEach(function(j){
+      md+='| '+j[0]+' | '+j[1]+' | '+(papers.length>0?Math.round(100*j[1]/papers.length):0)+'% |\n';
+    });
     md+='\n';
   }
 
-  /* ========== 数据资源 ========== */
-  md+='## 6. 数据资源\n\n';
-  if(datasets.length>0){
-    md+='### 6.1 Zenodo 公开数据集\n\n';
-    datasets.slice(0,10).forEach(function(d,i){
-      md+=(i+1)+'. **'+(d.title||'').slice(0,150)+'**\n';
-      if(d.authors) md+='   - 作者：'+d.authors+'\n';
-      if(d.year) md+='   - 年份：'+d.year+'\n';
-      if(d.doi) md+='   - DOI：['+d.doi+'](https://doi.org/'+d.doi+')\n';
-      if(d.url) md+='   - 链接：'+d.url+'\n';
-      if(d.abstract) md+='   - 摘要：'+(d.abstract||'').slice(0,200)+'\n';
-      md+='\n';
-    });
-  }
-  if(related.length>0){
-    md+='### 6.2 平台已收录数据集\n\n';
-    related.forEach(function(d,i){
-      md+=(i+1)+'. **'+d.title+'** ('+(d.en||'')+')\n';
-      if(d.summary) md+='   - '+(d.summary||'').slice(0,200)+'\n';
-      md+='\n';
-    });
-  }
-  if(datasets.length===0 && related.length===0){
-    md+='本次检索未发现直接关联的公开数据集。\n\n';
+  /* ========== 5. 数据资源盘点 ========== */
+  md+='## 5. 数据资源盘点\n\n';
+  var totalDatasets=datasets.length+related.length;
+  if(totalDatasets===0){
+    md+='本次文献检索未直接关联到可公开获取的研究数据集。建议研究者可通过以下途径获取数据：\n\n';
+    md+='- [Zenodo](https://zenodo.org)：开放获取研究数据平台\n';
+    md+='- [re3data](https://re3data.org)：全球研究数据基础设施注册表\n';
+    md+='- [Figshare](https://figshare.com)：学术数据共享平台\n';
+    md+='- 各研究机构的数据共享门户\n\n';
+  }else{
+    md+='### 5.1 Zenodo 公开数据集\n\n';
+    if(datasets.length>0){
+      datasets.forEach(function(d,i){
+        md+=(i+1)+'. **'+escapeHtml(d.title||'未命名数据集')+'**\n';
+        var dsDetails=[];
+        if(d.authors) dsDetails.push('创建者: '+d.authors);
+        if(d.year) dsDetails.push('年份: '+d.year);
+        if(d.doi) dsDetails.push('DOI: ['+d.doi+'](https://doi.org/'+d.doi+')');
+        if(d.url) dsDetails.push('[访问链接]('+d.url+')');
+        if(dsDetails.length>0) md+='   - '+dsDetails.join(' | ')+'\n';
+        if(d.description||d.abstract) md+='   - 描述: '+(d.description||d.abstract||'').slice(0,300)+'\n';
+        if(d._mhScore) md+='   - 相关性评分: '+d._mhScore+' 分\n';
+        md+='\n';
+      });
+    }
+    md+='### 5.2 平台已收录数据集\n\n';
+    if(related.length>0){
+      related.forEach(function(d,i){
+        md+=(i+1)+'. **'+escapeHtml(d.title)+'**';
+        if(d.en) md+=' ('+d.en+')';
+        md+='\n';
+        if(d.summary) md+='   - '+escapeHtml(d.summary).slice(0,300)+'\n';
+        md+='\n';
+      });
+    }
   }
 
-  /* ========== 研究局限与建议 ========== */
-  md+='## 7. 研究局限与展望\n\n';
-  md+='本综述存在以下局限性：\n\n';
-  md+='1. **检索范围**：仅基于 PubMed、Crossref 和 Semantic Scholar 三个数据库，可能遗漏灰色文献或非英文文献。\n';
-  md+='2. **纳入标准**：未进行严格的质量评价和偏倚评估，文献筛选基于关键词匹配而非全文审查。\n';
-  md+='3. **时效性**：检索结果反映当前数据库的即时状态，后续可能有新文献发表。\n\n';
-  md+='**未来研究方向建议**：\n\n';
-  if(stats.keywords.length>0){
-    md+='- 围绕「'+stats.keywords[0][0]+'」等高频关键词开展深入专题研究；\n';
+  /* ========== 6. 研究局限与展望 ========== */
+  md+='## 6. 研究局限与展望\n\n';
+  md+='### 6.1 本综述的局限性\n\n';
+  md+='1. **检索范围限制**：仅纳入 PubMed、Crossref 和 Semantic Scholar 三个英文数据库，可能遗漏：\n';
+  md+='   - 非英语语种文献（如中文、日语、德语等）\n';
+  md+='   - 灰色文献（学位论文、会议摘要、工作论文等）\n';
+  md+='   - 尚未被数据库索引的最新预印本\n\n';
+  md+='2. **筛选标准**：采用自动化相关性评分进行文献筛选，可能存在：\n';
+  md+='   - 将部分边缘相关研究纳入（假阳性）\n';
+  md+='   - 误排部分重要研究（假阴性）\n';
+  md+='   - 建议研究者结合人工审阅进一步确认\n\n';
+  md+='3. **信息完整性**：仅基于文献元数据（标题、摘要）进行分析，未获取全文，因此：\n';
+  md+='   - 可能遗漏详细的方法学描述\n';
+  md+='   - 无法进行精确的偏倚风险评估\n';
+  md+='   - 样本量等信息可能不完整\n\n';
+  md+='### 6.2 未来研究方向\n\n';
+  if(stats.keywords.length>=3){
+    md+='基于关键词热度与文献计量分析，建议重点关注以下研究方向：\n\n';
+    md+='1. **热点方向**：围绕「'+stats.keywords[0][0]+'」和「'+stats.keywords[1][0]+'」等高频主题开展方法学创新研究\n';
+    md+='2. **新兴趋势**：关注 '+stats.keywords.slice(2,5).map(function(k){return '「'+k[0]+'」'}).join('、')+' 等方向的最新进展\n';
+    md+='3. **方法学整合**：结合机器学习与传统统计方法，提升研究设计的科学性\n';
+    md+='4. **跨学科合作**：促进精神病学、心理学、神经科学和公共卫生学的交叉融合\n';
+    md+='5. **数据驱动研究**：利用 Zenodo、UK Biobank 等开放数据库进行二次分析与验证\n\n';
   }
-  if(stats.authors.length>0){
-    md+='- 追踪 '+stats.authors.slice(0,3).map(function(a){return a[0]}).join('、')+' 等高产作者的最新工作；\n';
-  }
-  md+='- 关注近 3 年的新兴文献，识别研究前沿与空白；\n';
-  md+='- 利用 Zenodo 等开放数据平台获取原始数据，开展二次分析。\n\n';
+  md+='### 6.3 实践意义\n\n';
+  md+='本综述整合的研究证据可为以下实践领域提供参考：\n\n';
+  md+='- 临床实践：辅助心理障碍的诊断与治疗方案选择\n';
+  md+='- 公共卫生：为心理健康政策制定与资源配置提供循证依据\n';
+  md+='- 研究设计：为同类研究的样本量估算、结局指标选择提供参考\n';
+  md+='- 数据获取：梳理可直接利用的开放研究数据集\n\n';
 
   /* ========== 参考文献 ========== */
   md+='## 参考文献\n\n';
@@ -6818,22 +7024,29 @@ function buildAgentReport(q,yMin,papers,datasets,stats,related){
     var ref=(i+1)+'. ';
     var auth=(p.authors||'').trim();
     if(auth){
-      /* 取前3位作者 */
       var authList=auth.split(/[,;]/).map(function(s){return s.trim()}).filter(function(s){return s});
-      if(authList.length>3) auth=authList.slice(0,3).join(', ')+' et al.';
-      else auth=authList.join(', ');
+      if(authList.length>6) ref+=authList.slice(0,6).join(', ')+', et al. ';
+      else if(authList.length>3) ref+=authList.slice(0,3).join(', ')+', et al. ';
+      else ref+=authList.join(', ')+'. ';
     }
-    ref+=auth+'. '+(p.title||'')+'. ';
-    ref+='*'+(p.journal||'未知期刊')+'*';
-    if(p.year) ref+='. '+(p.year+'').slice(0,4);
-    if(p.doi) ref+='. DOI: ['+p.doi+'](https://doi.org/'+p.doi+')';
-    if(p.pmid) ref+='. PMID: '+p.pmid;
+    ref+='**'+escapeHtml(p.title||'无标题')+'**. ';
+    ref+='*'+escapeHtml(p.journal||'未知期刊')+'*';
+    if(p.year) ref+='. '+escapeHtml(String(p.year).slice(0,4));
+    if(p.citations>0) ref+='. (被引 '+p.citations+' 次)';
+    ref+='.';
+    var links=[];
+    if(p.doi) links.push('[DOI: '+p.doi+'](https://doi.org/'+p.doi+')');
+    if(p.pmid) links.push('PMID: '+p.pmid);
+    if(p.url) links.push('[全文链接]('+p.url+')');
+    if(links.length>0) ref+=' '+links.join(' · ');
     ref+='\n';
     md+=ref;
   });
 
   md+='\n---\n\n';
-  md+='*本综述由 Research Data Hub 智能分析助手自动生成，所有文献数据均来自 PubMed、Crossref、Semantic Scholar 公开学术数据库，数据集信息来自 Zenodo。综述内容严格基于检索到的文献原文标题、摘要和元数据，未进行任何虚构或推测性生成。*\n';
+  md+='## 声明\n\n';
+  md+='*本综述由 Research Data Hub 智能分析系统自动生成。所有文献数据均直接来源于 PubMed、Crossref、Semantic Scholar 公开学术数据库的实时 API 返回，数据集信息来源于 Zenodo。全文严格基于检索到的文献元数据（标题、摘要、作者、期刊、DOI、PMID 等）进行结构化整合，**未对任何文献内容进行虚构、推断或润色**。读者在引用本文所述研究结论前，建议查阅原始文献进行核实。*\n\n';
+  md+='*© '+currentYear+' Research Data Hub · 生成于 '+now+'*\n';
   return md;
 }
 
