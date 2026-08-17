@@ -4291,11 +4291,9 @@ section.page.active{display:block}
 <section id="p-home" class="page active">
   <div class="hero">
     <h1>心理健康相关科研平台</h1>
-    <p class="sub">一站式检索学术文献，上传数据完成统计分析。</p>
+    <p class="sub">一站式检索学术文献与公开数据集。</p>
     <div class="hero-meta">
       <span>🔎 文献数据源：<b>PubMed · Crossref · Semantic Scholar</b></span>
-      <span>🐍 Python 引擎：<b>Pyodide 0.26 (NumPy / Pandas / SciPy)</b></span>
-      <span>📈 R 引擎：<b>webR 0.4 (stats / base)</b></span>
       <span>🕒 最近检索：<b id="home-lastupdate">暂无</b></span>
     </div>
     <div class="actions">
@@ -4326,10 +4324,9 @@ section.page.active{display:block}
   <div class="news-grid" id="news-grid">
     <div class="news-card"><div class="src">NIH · Data</div><h3>NIMH 发布 2026 年心理健康研究数据共享计划</h3><p>涵盖多站点纵向脑成像、社区人群调查与电子病历整合数据的开放获取路线图。</p><div class="foot"><span>2026-08-15</span><a href="#" onclick="event.preventDefault();go('search')">相关文献 →</a></div></div>
     <div class="news-card"><div class="src">Nature Mental Health</div><h3>2026 年青少年抑郁队列研究 Meta 分析更新</h3><p>基于 PHQ-9 工具的 142 个跨国样本联合分析，更新了患病率趋势估计。</p><div class="foot"><span>2026-08-10</span><a href="#" onclick="event.preventDefault();go('search')">检索 Meta →</a></div></div>
-    <div class="news-card"><div class="src">CDC / NHSS</div><h3>中国卫生统计年鉴 2026 版公开精神卫生指标</h3><p>省级层面的患病率、门诊人次、病床使用率等核心指标可在线下载 CSV。</p><div class="foot"><span>2026-08-05</span><a href="#" onclick="event.preventDefault();go('analyze')">上传数据 →</a></div></div>
+    <div class="news-card"><div class="src">CDC / NHSS</div><h3>中国卫生统计年鉴 2026 版公开精神卫生指标</h3><p>省级层面的患病率、门诊人次、病床使用率等核心指标可在线下载 CSV。</p><div class="foot"><span>2026-08-05</span><a href="#" onclick="event.preventDefault();go('search')">检索数据 →</a></div></div>
     <div class="news-card"><div class="src">UK Biobank</div><h3>第 3 次随访影像学 + 心理量表匹配数据开放</h3><p>新增 n≈50,000 的脑结构与 CES-D、GAD-7 配对记录，申请通道已开放。</p><div class="foot"><span>2026-07-28</span><a href="#" onclick="event.preventDefault();go('search')">检索 UKB →</a></div></div>
     <div class="news-card"><div class="src">re3data</div><h3>心理健康领域新增 23 个可开放获取数据集登记</h3><p>覆盖老年认知、儿童行为、社区干预等方向，re3data 搜索 mental health 可定位。</p><div class="foot"><span>2026-07-22</span><a href="#" onclick="event.preventDefault();go('search')">检索数据集 →</a></div></div>
-    <div class="news-card"><div class="src">Platform Update</div><h3>本平台集成 webR 0.4：支持浏览器端 R 统计</h3><p>在"数据统计分析"页选择 R 引擎，Cox/Logistic/线性回归、t 检验、卡方检验等原生可用。</p><div class="foot"><span>2026-08-17</span><a href="#" onclick="event.preventDefault();go('about')">查看说明 →</a></div></div>
   </div>
 </section>
 
@@ -4638,7 +4635,7 @@ else:
   <div class="page-title"><h2>ℹ️ 关于 &amp; 透明声明</h2><div class="meta">平台说明 · 隐私 · 引用</div></div>
   <div class="about-card">
     <h3>Research Data Hub · 科研数据平台</h3>
-    <p>为心理健康及相关研究领域的科研人员设计：一站式检索三大公开学术 API（PubMed / Crossref / Semantic Scholar），并在浏览器端直接对数据文件运行 Python 或 R 的描述性与推断统计分析，无需配置本地开发环境。</p>
+    <p>为心理健康及相关研究领域的科研人员设计：一站式检索三大公开学术 API（PubMed / Crossref / Semantic Scholar），获取文献与数据集信息。</p>
 
     <h3 style="margin-top:24px">文献研究智能体</h3>
     <ul>
