@@ -4278,8 +4278,7 @@ section.page.active{display:block}
   <div class="nav-tabs" id="nav-tabs">
     <button data-p="home" class="active">🏠 首页</button>
     <button data-p="search" class="">🔍 文献/数据集检索</button>
-    <button data-p="agent" class="">🤖 智能分析</button>
-    <button data-p="analyze" class="">📊 数据统计分析</button>
+    <button data-p="agent" class="">🤖 文献研究智能体</button>
     <button data-p="library">⭐ 我的收藏</button>
     <button data-p="about">ℹ️ 关于</button>
   </div>
@@ -4301,8 +4300,8 @@ section.page.active{display:block}
     </div>
     <div class="actions">
       <button class="btn primary" onclick="go('search')">🔍 立即检索文献</button>
-      <button class="btn teal" onclick="go('agent')">🤖 智能分析助手</button>
-      <button class="btn" onclick="go('analyze')">📊 上传数据做分析</button>
+      <button class="btn teal" onclick="go('agent')">🤖 文献研究智能体</button>
+      <button class="btn" onclick="go('search')">📁 公开数据集检索</button>
     </div>
   </div>
 
@@ -4458,10 +4457,10 @@ else:
 
 <!-- ============ PAGE: AGENT ============ -->
 <section id="p-agent" class="page">
-  <div class="page-title"><h2>🤖 智能分析助手</h2><div class="meta">输入关键词 → 自动爬取文献+数据集 → 计量分析 → 生成报告</div></div>
+  <div class="page-title"><h2>🤖 文献研究智能体</h2><div class="meta">关键词驱动：自动爬取文献 → 结构化中文摘要 → 计量分析 → 主题聚类 → 研究洞察 → 综合报告</div></div>
 
   <div class="toolbar">
-    <input class="input wide" id="agent-q" placeholder="输入研究关键词，例如：adolescent depression / 老年认知衰退 / suicide prevention cohort">
+    <input class="input wide" id="agent-q" placeholder="输入研究关键词，例如：adolescent depression / 老年认知衰退 / suicide prevention cohort / 青少年非自杀性自伤">
     <select id="agent-year"><option value="">所有年份</option><option value="2024">近 2 年</option><option value="2020">近 5 年</option><option value="2015">近 10 年</option></select>
     <button class="btn primary" onclick="runAgentAnalysis()">🚀 启动智能分析</button>
   </div>
@@ -4477,21 +4476,56 @@ else:
   <div id="agent-status" class="empty-tip">👆 输入关键词后启动智能分析。系统会从 PubMed/Crossref/Semantic Scholar 爬取文献、从 Zenodo 爬取数据集，自动完成文献计量分析并生成结构化报告。</div>
 
   <div id="agent-report" style="display:none">
-    <div class="grid-2" style="gap:14px">
-      <div class="agent-card"><h3>📊 文献年份分布</h3><div id="agent-year-chart" class="bar-chart"></div></div>
-      <div class="agent-card"><h3>👥 Top 作者</h3><div id="agent-author-chart" class="bar-chart"></div></div>
-      <div class="agent-card"><h3>📚 Top 期刊</h3><div id="agent-journal-chart" class="bar-chart"></div></div>
-      <div class="agent-card"><h3>🔗 高频关键词</h3><div id="agent-keyword-chart" class="bar-chart"></div></div>
+    <!-- Agent Sub-tabs -->
+    <div class="agent-tabs" id="agent-tabs">
+      <button class="agent-tab active" onclick="agentSwitchTab(this,'overview')">📊 研究概览</button>
+      <button class="agent-tab" onclick="agentSwitchTab(this,'papers')">📋 文献汇总 <span id="a-tab-count-papers" class="badge" style="display:none"></span></button>
+      <button class="agent-tab" onclick="agentSwitchTab(this,'datasets')">📁 相关数据集</button>
+      <button class="agent-tab" onclick="agentSwitchTab(this,'insights')">🧠 研究洞察</button>
+      <button class="agent-tab" onclick="agentSwitchTab(this,'report')">📝 综合报告</button>
     </div>
-    <div class="agent-card"><h3>🏆 高被引论文 Top 10</h3><div id="agent-top-papers"></div></div>
-    <div class="agent-card"><h3>💾 关联数据集</h3><div id="agent-datasets"></div></div>
-    <div class="agent-card"><h3>📝 综合报告（Markdown）</h3>
-      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-        <button class="btn sm" onclick="downloadAgentReport()">📥 下载 Markdown</button>
-        <button class="btn sm" onclick="saveAgentReport()">⭐ 收藏报告</button>
-        <button class="btn sm" onclick="loadAgentDataToAnalyze()">📊 加载文献数据到分析台</button>
+
+    <!-- Tab 1: 研究概览 -->
+    <div class="agent-tab-panel active" id="a-tab-overview">
+      <div class="grid-2" style="gap:14px">
+        <div class="agent-card"><h3>📊 文献年份分布</h3><div id="agent-year-chart" class="bar-chart"></div></div>
+        <div class="agent-card"><h3>👥 Top 高产作者</h3><div id="agent-author-chart" class="bar-chart"></div></div>
+        <div class="agent-card"><h3>📚 Top 核心期刊</h3><div id="agent-journal-chart" class="bar-chart"></div></div>
+        <div class="agent-card"><h3>🔗 高频关键词</h3><div id="agent-keyword-chart" class="bar-chart"></div></div>
       </div>
-      <pre id="agent-md" style="background:#f7f7f7;padding:12px;border-radius:3px;white-space:pre-wrap;max-height:500px;overflow:auto;font-size:12px;line-height:1.5"></pre>
+      <div class="agent-card"><h3>🏆 高被引论文 Top 10（含摘要）</h3><div id="agent-top-papers"></div></div>
+    </div>
+
+    <!-- Tab 2: 文献汇总 -->
+    <div class="agent-tab-panel" id="a-tab-papers">
+      <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <input class="input" id="a-papers-filter" placeholder="🔎 在本批文献内搜索（标题/作者/期刊/摘要）..." oninput="renderAgentPapersFiltered()" style="flex:1;min-width:240px">
+        <select id="a-papers-sort" class="input" onchange="renderAgentPapersFiltered()" style="width:auto">
+          <option value="cite">按被引数</option><option value="date">按年份（新→旧）</option><option value="dateasc">按年份（旧→新）</option>
+        </select>
+      </div>
+      <div id="agent-papers-list"></div>
+    </div>
+
+    <!-- Tab 3: 相关数据集 -->
+    <div class="agent-tab-panel" id="a-tab-datasets">
+      <div class="agent-card"><h3>💾 关联数据集</h3><div id="agent-datasets"></div></div>
+    </div>
+
+    <!-- Tab 4: 研究洞察 -->
+    <div class="agent-tab-panel" id="a-tab-insights">
+      <div id="agent-insights"></div>
+    </div>
+
+    <!-- Tab 5: 综合报告 -->
+    <div class="agent-tab-panel" id="a-tab-report">
+      <div class="agent-card"><h3>📝 综合报告（Markdown）</h3>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <button class="btn sm" onclick="downloadAgentReport()">📥 下载 Markdown</button>
+          <button class="btn sm" onclick="saveAgentReport()">⭐ 收藏报告</button>
+        </div>
+        <pre id="agent-md" style="background:#f7f7f7;padding:12px;border-radius:3px;white-space:pre-wrap;max-height:500px;overflow:auto;font-size:12px;line-height:1.5"></pre>
+      </div>
     </div>
   </div>
 </section>
@@ -4516,6 +4550,46 @@ else:
 #agent-top-papers .meta{color:var(--muted);font-size:11px;margin-top:2px}
 #agent-datasets .ds-row{padding:6px 8px;border-bottom:1px solid var(--line);font-size:13px}
 #agent-datasets .ds-row b{color:var(--accent)}
+
+/* Agent sub-tabs */
+.agent-tabs{display:flex;gap:4px;margin:14px 0 18px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:0}
+.agent-tab{background:transparent;border:1px solid transparent;border-bottom:none;padding:8px 14px;border-radius:4px 4px 0 0;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.agent-tab:hover{color:var(--ink2);background:#f5f8fd}
+.agent-tab.active{background:var(--panel);border-color:var(--line);color:var(--accent);font-weight:600;position:relative;top:1px;z-index:1}
+.agent-tab .badge{display:inline-block;margin-left:6px;background:#dce8ff;color:var(--accent);border-radius:10px;padding:0 7px;font-size:11px;font-weight:600}
+.agent-tab-panel{display:none;animation:fade .3s ease}
+.agent-tab-panel.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* Paper card */
+.paper-card{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:12px;margin-bottom:10px}
+.paper-card h4{margin:0 0 6px;font-size:14px;color:var(--ink2);line-height:1.4}
+.paper-card h4 a{color:inherit;text-decoration:none}
+.paper-card h4 a:hover{color:var(--accent)}
+.paper-card .pc-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.paper-card .pc-abs{color:var(--ink2);font-size:12.5px;line-height:1.6;margin:6px 0;background:#f9fbfd;padding:8px 10px;border-left:3px solid var(--accent);border-radius:0 3px 3px 0}
+.paper-card .pc-struct{margin:8px 0;padding:8px 10px;background:#fff9ec;border:1px solid #ffe6a3;border-radius:3px;font-size:12.5px;line-height:1.6}
+.paper-card .pc-struct .s-row{margin-bottom:3px}
+.paper-card .pc-struct .s-label{display:inline-block;min-width:70px;color:#b37b00;font-weight:600;margin-right:6px}
+.paper-card .pc-foot{margin-top:6px;color:var(--muted);font-size:11.5px;display:flex;gap:12px;flex-wrap:wrap}
+.paper-card .pc-actions{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+
+/* Insight blocks */
+.insight-box{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:14px;margin-bottom:14px}
+.insight-box h3{margin:0 0 10px;font-size:14px;color:var(--ink2);display:flex;align-items:center;gap:6px}
+.insight-box .topic-group{border-left:3px solid var(--accent2);padding:6px 0 6px 12px;margin-bottom:10px}
+.insight-box .topic-group h5{margin:0 0 4px;font-size:13px;color:var(--accent2)}
+.insight-box .topic-group ul{margin:4px 0;padding-left:18px}
+.insight-box .topic-group li{font-size:12.5px;color:var(--ink2);line-height:1.6}
+.citation-timeline{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;padding:8px;background:#f7f9fc;border-radius:3px}
+.citation-timeline .tl-node{flex:1;min-width:90px;background:#fff;border:1px solid var(--line);border-radius:3px;padding:6px 8px;text-align:center;font-size:11.5px}
+.citation-timeline .tl-node .year{font-weight:700;color:var(--accent);display:block}
+.citation-timeline .tl-node .title{color:var(--ink2);line-height:1.4;max-height:48px;overflow:hidden}
+.gap-list{margin:0;padding-left:20px}
+.gap-list li{font-size:13px;color:var(--ink2);line-height:1.7;margin-bottom:5px}
+.rec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.rec-card{background:linear-gradient(135deg,#eef5ff,#f5f0ff);border:1px solid #d8e4f5;border-radius:4px;padding:10px;font-size:12.5px;line-height:1.6;color:var(--ink2)}
+.rec-card b{color:var(--accent);display:block;margin-bottom:4px}
 </style>
 
 <!-- ============ PAGE 4: LIBRARY ============ -->
@@ -4532,11 +4606,13 @@ else:
     <h3>Research Data Hub · 科研数据平台</h3>
     <p>为心理健康及相关研究领域的科研人员设计：一站式检索三大公开学术 API（PubMed / Crossref / Semantic Scholar），并在浏览器端直接对数据文件运行 Python 或 R 的描述性与推断统计分析，无需配置本地开发环境。</p>
 
-    <h3 style="margin-top:24px">分析引擎</h3>
+    <h3 style="margin-top:24px">文献研究智能体</h3>
     <ul>
-      <li><b>Python</b>：Pyodide 0.26（CPython 编译到 WebAssembly）→ 支持 NumPy, Pandas, SciPy, statsmodels, pingouin。</li>
-      <li><b>R</b>：webR 0.4（R 编译到 WebAssembly）→ 支持 base + stats 全部函数，支持 CRAN 包按需安装。</li>
-      <li>两种引擎均<b>完全运行在用户的浏览器中</b>，上传的数据文件不会发送到任何服务器。</li>
+      <li><b>关键词驱动检索</b>：PubMed / Crossref / Semantic Scholar 三源文献爬取 + Zenodo 数据集，按 DOI/PMID/标题去重。</li>
+      <li><b>结构化中文研究摘要</b>：从标题、摘要自动提取研究对象、方法学、样本量、核心发现四要素。</li>
+      <li><b>文献计量分析</b>：年份分布、高产作者、核心期刊、高频关键词、高被引 Top 10 可视化。</li>
+      <li><b>研究洞察</b>：主题聚类（基于关键词相似度）、引用脉络时间线、研究空白识别、推荐下一步研究方向。</li>
+      <li><b>可下载报告</b>：一键生成 Markdown 综合报告，包含全部文献与数据集。</li>
     </ul>
 
     <h3 style="margin-top:24px">文献与数据检索</h3>
@@ -6513,28 +6589,323 @@ function buildAgentReport(q,yMin,papers,datasets,stats,related){
 }
 
 function renderAgentReport(papers,datasets,stats,related,md){
+  // update badge on papers tab
+  var b=document.getElementById('a-tab-count-papers');
+  if(b){ b.style.display='inline-block'; b.textContent=papers.length; }
   renderBarChart('agent-year-chart',stats.years);
   renderBarChart('agent-author-chart',stats.authors);
   renderBarChart('agent-journal-chart',stats.journals);
   renderBarChart('agent-keyword-chart',stats.keywords);
+  // Top cited papers in overview: 含摘要
   var topCited=papers.filter(function(p){return p.citations>0}).sort(function(a,b){return b.citations-a.citations}).slice(0,10);
   var el=document.getElementById('agent-top-papers');
   if(topCited.length===0){
     el.innerHTML='<div style="color:var(--muted)">无被引数据（Crossref/S2 才提供引用数）</div>';
   }else{
     el.innerHTML='<ol>'+topCited.map(function(p){
-      return '<li><div>'+(p.title||'无标题').slice(0,200)+'</div><div class="meta">'+(p.authors||'').slice(0,80)+' · '+(p.journal||'')+' '+(p.year||'')+' · 被引 '+(p.citations||0)+'</div></li>';
+      var struc=makeStructuredAbstract(p);
+      var abs=(p.abstract||'').trim();
+      var shortAbs=abs.length>220?(abs.slice(0,220)+'…'):abs;
+      return '<li style="padding-bottom:8px;border-bottom:1px dashed var(--line)">'+
+        '<div style="color:var(--ink2);font-weight:600">'+(abs?'<span style="color:var(--ok)">✓</span> ':'')+(p.title||'无标题').slice(0,240)+'</div>'+
+        '<div class="meta">'+(p.authors||'').slice(0,90)+' · '+(p.journal||'')+' '+(p.year||'')+' · 被引 <b>'+(p.citations||0)+'</b> · 来源 '+p.source+
+        (p.doi?' · DOI: '+p.doi:'')+(p.pmid?' · PMID: '+p.pmid:'')+
+        (p.url?' · <a href="'+p.url+'" target="_blank">↗原文</a>':'')+'</div>'+
+        (shortAbs?('<div style="margin-top:4px;color:var(--ink2);font-size:12.5px;line-height:1.6;background:#f9fbfd;padding:6px 10px;border-left:3px solid var(--accent);border-radius:0 3px 3px 0">'+shortAbs+'</div>'):'')+
+        (struc?('<div style="margin-top:6px;padding:6px 10px;background:#fff9ec;border:1px solid #ffe6a3;border-radius:3px;font-size:12px;color:#8a6400;line-height:1.6">📌 '+struc.population+' · '+struc.method+' · '+struc.sample+' · '+struc.finding+'</div>'):'')+
+        '</li>';
     }).join('')+'</ol>';
   }
+  // Datasets tab
   var dsEl=document.getElementById('agent-datasets');
-  if(related.length===0){
-    dsEl.innerHTML='<div style="color:var(--muted)">未匹配到本地数据集</div>';
+  if(related.length===0 && datasets.length===0){
+    dsEl.innerHTML='<div style="color:var(--muted)">未匹配到关联数据集</div>';
   }else{
-    dsEl.innerHTML=related.map(function(d){
-      return '<div class="ds-row"><b>'+d.title+'</b> ('+(d.en||'')+')<div style="color:var(--muted);font-size:12px;margin-top:2px">'+(d.summary||'').slice(0,200)+'</div></div>';
-    }).join('');
+    var html='';
+    if(related.length>0){
+      html+='<h4 style="margin:0 0 8px;font-size:13px;color:var(--accent2)">📚 已收录本地数据集（'+related.length+'）</h4>';
+      html+=related.map(function(d){
+        return '<div class="ds-row"><b>'+d.title+'</b> ('+(d.en||'')+')<div style="color:var(--ink2);font-size:12.5px;margin-top:4px;line-height:1.6">'+(d.summary||'').slice(0,260)+'</div></div>';
+      }).join('');
+    }
+    if(datasets.length>0){
+      if(html)html+='<div style="height:10px"></div>';
+      html+='<h4 style="margin:0 0 8px;font-size:13px;color:var(--accent)">🌐 Zenodo 公开数据集（'+datasets.length+'）</h4>';
+      html+=datasets.map(function(d){
+        return '<div class="ds-row"><b>'+(d.title||'').slice(0,200)+'</b>'+
+          '<div style="color:var(--muted);font-size:11.5px;margin-top:2px">'+(d.authors||'').slice(0,120)+' · '+(d.year||'')+
+          (d.doi?' · DOI: '+d.doi:'')+(d.url?' · <a href="'+d.url+'" target="_blank">↗</a>':'')+'</div>'+
+          (d.abstract?('<div style="color:var(--ink2);font-size:12.5px;margin-top:4px;line-height:1.6">'+(d.abstract||'').slice(0,300)+'</div>'):'')+
+          '</div>';
+      }).join('');
+    }
+    dsEl.innerHTML=html;
   }
   document.getElementById('agent-md').textContent=md;
+  // Render all papers in tab
+  renderAgentPapersFiltered(papers);
+  // Render insights
+  renderAgentInsights(papers,stats);
+  // default switch to overview tab (already active in dom)
+}
+
+/* Agent sub-tab switcher */
+function agentSwitchTab(btn,name){
+  document.querySelectorAll('#agent-tabs .agent-tab').forEach(function(b){b.classList.remove('active')});
+  btn.classList.add('active');
+  document.querySelectorAll('[id^="a-tab-"]').forEach(function(p){p.classList.remove('active')});
+  var el=document.getElementById('a-tab-'+name);
+  if(el) el.classList.add('active');
+}
+
+/* ================ Structured Chinese abstract extraction ================ */
+/* 浏览器端规则：从标题+摘要提取 研究对象 / 方法学 / 样本量 / 核心发现 */
+function makeStructuredAbstract(p){
+  if(!p) return null;
+  var t=String(p.title||'').trim();
+  var a=String(p.abstract||'').trim();
+  var blob=(t+' '+a).toLowerCase();
+  if(!t && !a) return null;
+
+  // 1. Population: 词表匹配
+  var popCn='',popEn='';
+  [
+    [/adolescent|teenager|youth|teen|child|kid|student|school|pupil|adolescence/i,'青少年 / 学生'],
+    [/older|elderly|elder|aged|geriatric|aging|ageing|old.people|older.adults|dementia|cognit/i,'老年人 / 认知老化人群'],
+    [/patient|clinical|outpatient|inpatient|hospitalized|clinic|psychiatr|mental.health/i,'临床 / 精神科患者'],
+    [/pregnant|prenatal|perinatal|postpartum|maternal/i,'孕产妇 / 围产期人群'],
+    [/worker|employee|occupational|staff|nurse|teacher|firefighter|police/i,'职业人群（医护/教职/应激职业）'],
+    [/population.based|community|general.population|population|nationally.representative/i,'社区 / 一般人群'],
+    [/veteran|military|soldier|combat|army/i,'军人 / 退伍军人'],
+    [/low.income|socioeconomic|poverty|disadvantaged|minority|indigenous|ethnic|rural|refugee|immigrant/i,'低社会经济 / 少数族裔 / 移民 / 农村'],
+    [/lgbt|lesbian|gay|bisexual|transgender|sexual.minority/i,'性少数群体'],
+    [/offender|prison|inmate|juvenile.delinquent|justice.involved/i,'司法涉入 / 监禁人群']
+  ].forEach(function(m){if(m[0].test(blob)&&!popEn)popEn=m[1]});
+  if(popEn) popCn=popEn;
+  if(!popCn){
+    var m1=t.match(/([A-Za-z\u4e00-\u9fa5]{2,30})\s*(patients|participants|individuals|subjects|children|adults|men|women|sample|population|人群|患者|大学生|中学生|小学生|老年人|青少年)/i);
+    if(m1) popCn=(m1[1]+' '+m1[2]);
+    else popCn='未明确说明';
+  }
+
+  // 2. Method (study design)
+  var methods=[];
+  if(/randomized.*controlled|randomised|rct|double.?blind|placebo/i.test(blob)) methods.push('随机对照试验 RCT');
+  if(/cluster.randomi/i.test(blob)) methods.push('整群随机');
+  if(/cross.?sectional|prevalence|cross.section/i.test(blob)) methods.push('横断面调查');
+  if(/cohort|prospective|longitudinal|follow.?up|incident/i.test(blob)) methods.push('队列 / 纵向追踪');
+  if(/case.?control|case control|retrospective/i.test(blob)) methods.push('病例对照');
+  if(/systematic.?review|meta.?analysis|meta analysis|prisma/i.test(blob)) methods.push('系统综述 / Meta分析');
+  if(/qualitative|interview|focus.?group|grounded|phenomenolog|thematic/i.test(blob)) methods.push('定性研究（访谈/FGD）');
+  if(/mixed.?method/i.test(blob)) methods.push('混合方法');
+  if(/quasi.?experiment|interrupted.?time.?series|difference.in.difference|did|natural.?experiment/i.test(blob)) methods.push('准实验 / 自然实验');
+  if(/cross.over|crossover/i.test(blob)) methods.push('交叉试验');
+  if(/pilot|feasibility/i.test(blob)) methods.push('预实验 / 可行性研究');
+  if(/case.report|case series|case.study/i.test(blob)) methods.push('病例报告 / 个案');
+  if(/registry|register|database|nationwide|population.based/i.test(blob) && methods.length===0) methods.push('注册库 / 数据库二次分析');
+  if(/structural.?equation|sem\b|mediation|moderation|multilevel|hierarchical|mixed.?effects?|latent|growth.?curve|trajectory/i.test(blob)) methods.push('高级统计建模（SEM/多层/潜变量）');
+  if(/machine.?learning|neural.?network|deep.?learning|random.?forest|xgboost|svm|nlp|transformer|bert|llm|ai\b/i.test(blob)) methods.push('机器学习 / AI');
+  if(/fmri|mri|pet|eeg|neuroimaging|brain.?imaging|genom|epigenetic|biological|biomarker|inflammatory|immune|cortisol|hpa/i.test(blob)) methods.push('神经影像 / 生物标志物');
+  if(methods.length===0) methods.push('未明确');
+
+  // 3. Sample size: 匹配 "N = 1234", "n=234", "1,234 participants" 等
+  var sample='未报告';
+  var sz=null;
+  var ssRe=[
+    /n\s*=\s*([0-9][0-9,\.]*)/i,
+    /N\s*=\s*([0-9][0-9,\.]*)/,
+    /([0-9][0-9,\.]*)\s*(?:participants|subjects|individuals|patients|adults|children|students|respondents|sample|cases|controls)/i,
+    /([0-9][0-9,\.]*)\s*-?(?:person|individual)/i
+  ];
+  for(var i=0;i<ssRe.length;i++){var mm=(a||t).match(ssRe[i]);if(mm){var v=mm[1].replace(/,/g,''); var vn=parseFloat(v); if(!isNaN(vn)){sz=Math.round(vn);break}}}
+  if(sz!==null){
+    if(sz<50) sample='小样本（N='+sz+'）';
+    else if(sz<500) sample='中等样本（N='+sz+'）';
+    else if(sz<5000) sample='较大样本（N='+sz+'）';
+    else sample='大规模样本（N='+sz+'）';
+  } else {
+    // 从 meta info 推断
+    if(/meta.?analys|systematic.?review/i.test(blob)) sample='综述（聚合多研究）';
+  }
+
+  // 4. Key findings: 抓取含结果性关键词的句子
+  var finding='';
+  if(a){
+    var sents=a.split(/(?<=[.!?。！？])\s+/).filter(function(s){return s.trim().length>10});
+    var result=[];
+    for(var k=0;k<sents.length;k++){
+      var ss=sents[k].toLowerCase();
+      if(/result|find|found|showed|showed that|revealed|indicated|demonstrated|significant|significantly|associated|related|correlated|predicted|higher|lower|increased|decreased|reduce|improve|effect|impact|mediated|moderated|difference|was.*?associated|observed|not.*significant|no.*significan/i.test(ss) || /结果|表明|发现|显著|相关|关联|预测|影响|中介|调节|差异|高于|低于|增加|减少|提高|降低|改善|干预有效|无统计学意义/.test(ss)){
+        var line=sents[k].trim();
+        if(line.length>250) line=line.slice(0,250)+'…';
+        result.push(line);
+        if(result.length>=2) break;
+      }
+    }
+    finding=result.length?result.join(' ; '):(sents[sents.length-1]||'（请见原文）').trim().slice(0,220);
+  } else {
+    finding='（摘要不可用，请点击原文链接查看）';
+  }
+  if(finding.length>320) finding=finding.slice(0,320)+'…';
+
+  return {population:popCn,method:methods.join(' + '),sample:sample,finding:finding};
+}
+
+/* ================ Agent papers list (full papers) ================ */
+function renderAgentPapersFiltered(all){
+  var papers=all||(AGENT_LAST&&AGENT_LAST.papers)||[];
+  var fInp=document.getElementById('a-papers-filter');
+  var sSel=document.getElementById('a-papers-sort');
+  var fv=(fInp&&fInp.value||'').trim().toLowerCase();
+  var sortKind=sSel?sSel.value:'cite';
+  var list=papers.slice();
+  if(fv){
+    list=list.filter(function(p){
+      return ((p.title||'').toLowerCase().indexOf(fv)>=0)||
+             ((p.abstract||'').toLowerCase().indexOf(fv)>=0)||
+             ((p.authors||'').toLowerCase().indexOf(fv)>=0)||
+             ((p.journal||'').toLowerCase().indexOf(fv)>=0);
+    });
+  }
+  if(sortKind==='date') list.sort(function(a,b){return (b.year||0)-(a.year||0)});
+  else if(sortKind==='dateasc') list.sort(function(a,b){return (a.year||0)-(b.year||0)});
+  else list.sort(function(a,b){return (b.citations||0)-(a.citations||0)});
+
+  var el=document.getElementById('agent-papers-list');
+  if(list.length===0){el.innerHTML='<div style="color:var(--muted);text-align:center;padding:24px 0">无匹配文献</div>';return}
+  el.innerHTML=list.map(function(p,idx){
+    var s=makeStructuredAbstract(p);
+    var badges=[];
+    if(p.citations>0) badges.push('<span class="chip gold">📈 被引 '+p.citations+'</span>');
+    else badges.push('<span class="chip grey">被引 0</span>');
+    badges.push('<span class="chip">📅 '+(p.year||'-')+'</span>');
+    badges.push('<span class="chip blue">🔎 '+p.source+'</span>');
+    if(/rct|randomiz/i.test((p.title+' '+(p.abstract||'')).toLowerCase())) badges.push('<span class="chip ok">RCT</span>');
+    if(/meta.?analys|systematic.?review/i.test((p.title+' '+(p.abstract||'')).toLowerCase())) badges.push('<span class="chip ok">系统综述/Meta</span>');
+    if(/cohort|longitudinal/i.test((p.title+' '+(p.abstract||'')).toLowerCase())) badges.push('<span class="chip ok">队列研究</span>');
+    if(/cross.?section/i.test((p.title+' '+(p.abstract||'')).toLowerCase())) badges.push('<span class="chip ok">横断面</span>');
+
+    var absHtm='';
+    if(p.abstract){
+      var full=(p.abstract||'').trim();
+      var short=full.slice(0,320);
+      var more=full.length>320;
+      absHtm='<div class="pc-abs" id="pcabs-'+p.kind+idx+'"><b>摘要：</b>'+short+(more?'<span id="pcmore-'+p.kind+idx+'" style="display:none">'+full.slice(320)+'</span><a href="javascript:;" onclick="this.style.display=\'none\';document.getElementById(\'pcmore-'+p.kind+idx+'\').style.display=\'inline\'" id="pctoggle-'+p.kind+idx+'">…[展开全文]</a>':'')+'</div>';
+    }
+    var strucHtm=s?('<div class="pc-struct">'+
+      '<div class="s-row"><span class="s-label">研究对象：</span>'+s.population+'</div>'+
+      '<div class="s-row"><span class="s-label">方法学：</span>'+s.method+'</div>'+
+      '<div class="s-row"><span class="s-label">样本量：</span>'+s.sample+'</div>'+
+      '<div class="s-row"><span class="s-label">核心发现：</span>'+s.finding+'</div>'+
+      '</div>'):'';
+    return '<div class="paper-card">'+
+      '<h4>'+(p.url?('<a href="'+p.url+'" target="_blank">'+(p.title||'无标题')+'</a>'):(p.title||'无标题'))+'</h4>'+
+      '<div class="pc-badges">'+badges.join('')+'</div>'+
+      '<div class="meta" style="color:var(--muted);font-size:11.5px">👤 '+(p.authors||'未知')+' · 📚 '+(p.journal||'未知')+
+      (p.doi?' · DOI: '+p.doi:'')+(p.pmid?' · PMID: '+p.pmid:'')+'</div>'+
+      absHtm+strucHtm+
+      '<div class="pc-actions">'+
+        '<button class="btn sm" data-title="'+(p.title||'').replace(/"/g,'&quot;')+'" data-type="paper" data-source="'+p.source+'" data-year="'+(p.year||'')+'" data-url="'+(p.url||'')+'" data-doi="'+(p.doi||'')+'" onclick="libAddPaper(this)">⭐ 收藏</button>'+
+        (p.url?'<a class="btn sm" href="'+p.url+'" target="_blank">↗ 原文</a>':'')+
+        (p.doi?'<a class="btn sm" href="https://doi.org/'+p.doi+'" target="_blank">🔗 DOI</a>':'')+
+      '</div></div>';
+  }).join('')+'<div style="color:var(--muted);font-size:12px;text-align:center;margin-top:6px">共 '+list.length+' / '+papers.length+' 篇文献</div>';
+}
+
+/* ================ Agent Insights: topic clustering + citation timeline + gaps + recommendations ================ */
+function renderAgentInsights(papers,stats){
+  var el=document.getElementById('agent-insights');
+  if(!el) return;
+  if(!papers||papers.length===0){el.innerHTML='<div style="color:var(--muted)">暂无数据</div>';return}
+
+  // 1) Topic clustering: top N keywords -> find for each keyword top 3 papers that mention it
+  var kwTop=(stats&&stats.keywords)?stats.keywords.slice(0,8):[];
+  var topicHtml='';
+  if(kwTop.length>0){
+    topicHtml='<div class="insight-box"><h3>🗂 主题聚类（基于高频关键词 × 共现文献）</h3>';
+    kwTop.forEach(function(kw){
+      var w=kw[0];
+      var matched=papers.filter(function(p){
+        return ((p.title||'').toLowerCase()+' '+(p.abstract||'').toLowerCase()).indexOf(w)>=0;
+      }).slice(0,5);
+      if(matched.length===0) return;
+      topicHtml+='<div class="topic-group"><h5>🔑 <b>'+w+'</b>（出现 '+kw[1]+' 次，覆盖 '+matched.length+' 篇文献）</h5><ul>';
+      matched.forEach(function(p){
+        var s=makeStructuredAbstract(p);
+        var brief='';
+        if(s) brief=' — ['+s.method+' / '+s.sample+']';
+        topicHtml+='<li><b>('+(p.year||'-')+')</b> '+(p.title||'').slice(0,180)+brief+'</li>';
+      });
+      topicHtml+='</ul></div>';
+    });
+    topicHtml+='</div>';
+  }
+
+  // 2) Citation timeline: pick 6 highly cited papers spread across years
+  var citeSorted=papers.filter(function(p){return p.year&&(p.citations>0||p.doi)}).slice().sort(function(a,b){return (a.year||0)-(b.year||0)});
+  var tlHtml='';
+  if(citeSorted.length>=3){
+    // spread: 每 1 个代表点尽量分年份
+    var chosen=[], seenYears={};
+    citeSorted.slice().sort(function(a,b){return (b.citations||0)-(a.citations||0)}).forEach(function(p){
+      if(chosen.length>=6)return;
+      var y=String(p.year);
+      if(seenYears[y]) return;
+      seenYears[y]=1; chosen.push(p);
+    });
+    if(chosen.length<3) chosen=citeSorted.slice(0,6);
+    chosen.sort(function(a,b){return (a.year||0)-(b.year||0)});
+    tlHtml='<div class="insight-box"><h3>📜 引用脉络时间线（关键里程碑文献）</h3><div class="citation-timeline">';
+    chosen.forEach(function(p){
+      tlHtml+='<div class="tl-node"><span class="year">'+(p.year||'-')+'</span><span class="title">'+(p.title||'').slice(0,120)+'</span><div style="color:var(--ok);margin-top:2px">📈 '+ (p.citations||0)+' 被引</div></div>';
+    });
+    tlHtml+='</div><div style="margin-top:8px;color:var(--muted);font-size:12px">每格为该年份代表性高被引文献，纵向浏览可观察主题演化脉络。</div></div>';
+  }
+
+  // 3) Research gaps: heuristic rule based analysis
+  var gapHtml='<div class="insight-box"><h3>🕳 识别到的潜在研究空白（规则启发式）</h3><ul class="gap-list">';
+  var recentCnt=papers.filter(function(p){return p.year>=2023}).length;
+  var ratio=papers.length?recentCnt/papers.length:0;
+  if(papers.length<15) gapHtml.push('<li>🆕 文献量偏<b>少</b>（'+papers.length+' 篇），建议扩展同义词、相关 MeSH 词或放宽年份继续检索。</li>');
+  if(recentCnt<3) gapHtml.push('<li>⏰ 近 2 年（2023+）文献仅 '+recentCnt+' 篇 → <b>新兴话题或数据尚未发表</b>，关注预印本与前沿会议。</li>');
+  else if(ratio<0.15) gapHtml.push('<li>⏳ 近年更新率较低（近 2 年占比仅 '+(Math.round(ratio*100))+'%）→ <b>主题可能趋冷</b>，或存在发表/检索偏倚。</li>');
+  // RCT / meta / longitudinal
+  var rctCount=papers.filter(function(p){return /randomi|rct\b|randomized/i.test((p.title+' '+(p.abstract||'')).toLowerCase())}).length;
+  var metaCount=papers.filter(function(p){return /meta.?analys|systematic.?review/i.test((p.title+' '+(p.abstract||'')).toLowerCase())}).length;
+  var longCount=papers.filter(function(p){return /cohort|longitudinal|prospective|follow.?up/i.test((p.title+' '+(p.abstract||'')).toLowerCase())}).length;
+  if(rctCount<2) gapHtml.push('<li>🧪 <b>高质量因果证据不足</b>：RCT 仅 '+rctCount+' 篇，结论多为相关性，推断因果需谨慎。</li>');
+  if(metaCount<1) gapHtml.push('<li>📙 <b>缺少系统综述/Meta分析</b>：该主题暂无整合性结论，适合撰写综述类文章。</li>');
+  if(longCount<2) gapHtml.push('<li>🔁 <b>纵向/队列研究偏少</b>（'+longCount+' 篇）：难以说明发生时序与因果方向，前瞻性队列是推荐方向。</li>');
+  // method gaps: 样本量 / 亚组 / 机制
+  var bigN=papers.filter(function(p){
+    var s=makeStructuredAbstract(p);
+    return s && /大规模|较大样本|N=[5-9]\d{3,}|N=\d{5}/.test(s.sample);
+  }).length;
+  if(bigN<1) gapHtml.push('<li>📏 <b>大规模代表性研究缺失</b>：现有研究样本量较小，结论的外部效度有限。</li>');
+  var neuro=papers.filter(function(p){return /fmri|eeg|neuroimaging|brain|biomarker|inflammat|genet|epigenet/i.test((p.title+' '+(p.abstract||'')).toLowerCase())}).length;
+  if(papers.length>=8 && neuro<1) gapHtml.push('<li>🧠 <b>机制/生物学研究不足</b>：现有研究多为行为/调查层面，缺乏脑影像、生物标志物、遗传与炎症机制证据。</li>');
+  var lowSE=papers.filter(function(p){return /low.income|rural|minority|socioeconomic|poverty|indigenous|refugee/i.test((p.title+' '+(p.abstract||'')).toLowerCase())}).length;
+  if(papers.length>=10 && lowSE<1) gapHtml.push('<li>🌏 <b>文化/地域样本单一</b>：缺乏低收入、农村、少数族裔、移民等多样性群体研究，跨文化普适性存疑。</li>');
+  var inter=papers.filter(function(p){return /intervention|therapy|treatment|program|prevent/i.test((p.title+' '+(p.abstract||'')).toLowerCase())}).length;
+  if(inter<2) gapHtml.push('<li>💊 <b>干预性研究较少</b>（'+inter+' 篇）：现多为描述性研究，适合设计评估类干预研究方案。</li>');
+  var aiCount=papers.filter(function(p){return /machine.?learning|deep.?learning|neural.?network|bert|llm|transformer|ai\b|chatgpt|nlp/i.test((p.title+' '+(p.abstract||'')).toLowerCase())}).length;
+  if(papers.length>=12 && aiCount<1) gapHtml.push('<li>🤖 <b>AI / NLP 方法尚未渗透</b>：适合引入大模型自动筛查文献、识别风险因素、构建预测模型。</li>');
+  if(gapHtml.split('<li>').length<=2) gapHtml+='<li>未发现明显的空白，建议从「纵向时序 + 机制通路 + 干预评估」三维度深化。</li>';
+  gapHtml+='</ul></div>';
+
+  // 4) Recommendations
+  var recHtml='<div class="insight-box"><h3>🎯 下一步研究方向推荐</h3><div class="rec-grid">';
+  var hotKws=kwTop.slice(0,3).map(function(k){return k[0]});
+  var kwStr=hotKws.length?('“'+hotKws.join(' / ')+'”'):'本研究主题';
+  recHtml+='<div class="rec-card"><b>📘 综述类</b>撰写 '+kwStr+' 的系统综述（遵循 PRISMA）+ Meta分析，填补当前综合证据的空白。</div>';
+  recHtml+='<div class="rec-card"><b>🧪 因果推断类</b>开展队列研究或准实验（DID/断点回归/RCT），替代当前以横断面为主的相关证据。</div>';
+  recHtml+='<div class="rec-card"><b>🧠 机制探索类</b>整合神经影像、生物标志物（炎症/HPA轴/脑电）+ 心理量表，识别中介与调节通路。</div>';
+  recHtml+='<div class="rec-card"><b>🌏 多样性样本</b>纳入农村/少数族裔/低SES/跨文化样本，提升结论的外部效度与普适性。</div>';
+  recHtml+='<div class="rec-card"><b>💊 干预评估类</b>设计分层干预方案（预防/早筛/治疗）+ 成本效果分析，支撑政策转化。</div>';
+  recHtml+='<div class="rec-card"><b>🤖 AI 方法类</b>构建基于大模型 + 结构化量表数据的风险预测/早期筛查工具，落地到移动端或临床。</div>';
+  recHtml+='</div></div>';
+
+  el.innerHTML=topicHtml+tlHtml+gapHtml+recHtml;
 }
 
 function renderBarChart(elId,data){
@@ -6732,7 +7103,14 @@ function renderLits(){
       var tagClass=l.cat==='m1'?'ok':(l.cat==='m3'?'warn':'grey');
       var doiLink=l.doi?('<a href="https://doi.org/'+encodeURIComponent(l.doi)+'" target="_blank" onclick="event.stopPropagation()">'+escLit(l.doi)+'</a>'):'<span style="color:var(--muted)">无</span>';
       var srcLine=(l.src||'')+ (l.src&&l.dsetTitle?' · ':'') + (l.dsetTitle?('关联：'+escLit(l.dsetTitle)):'');
-      return '<div class="dset-card" style="cursor:pointer" onclick="openLit('+l._idx+')"><div style="display:flex;justify-content:space-between;align-items:flex-start"><h4 style="font-size:13.5px;line-height:1.4">'+escLit(litShort(l.ref,90))+'</h4><span class="chip '+tagClass+'">'+escLit(l.catName)+'</span></div><p style="font-size:12px;color:var(--muted);margin:6px 0">'+escLit(srcLine)+'</p><div class="dc-foot"><span>DOI</span><span>'+doiLink+'</span></div></div>';
+      var absSnippet='';
+      var refText=(l.ref||'').trim();
+      // ref 通常包含作者+标题+期刊，若长度超过 140 说明含摘要信息，截取 140 字展示
+      if(refText.length>140){
+        var snippet=refText.slice(refText.indexOf(' ', refText.indexOf('.')+4)>=0?Math.min(refText.indexOf(' ', refText.indexOf('.')+4)+1,80):80, 80+160);
+        absSnippet='<p style="font-size:12px;color:var(--ink2);margin:4px 0 8px;line-height:1.6;background:#f9fbfd;padding:4px 8px;border-left:3px solid var(--accent);border-radius:0 3px 3px 0">📄 '+escLit(refText.length>150?refText.slice(80,240)+'…':refText)+'</p>';
+      }
+      return '<div class="dset-card" style="cursor:pointer" onclick="openLit('+l._idx+')"><div style="display:flex;justify-content:space-between;align-items:flex-start"><h4 style="font-size:13.5px;line-height:1.4">'+escLit(litShort(l.ref,110))+'</h4><span class="chip '+tagClass+'">'+escLit(l.catName)+'</span></div>'+absSnippet+'<p style="font-size:12px;color:var(--muted);margin:6px 0">'+escLit(srcLine)+'</p><div class="dc-foot"><span>DOI</span><span>'+doiLink+'</span></div></div>';
     }).join('');
   }
   var total=Math.ceil(filtered.length/litPageSize),pg=document.getElementById('lit-pager');
@@ -6748,13 +7126,31 @@ function openLit(idx){
   var doiLink=l.doi?('<a href="https://doi.org/'+encodeURIComponent(l.doi)+'" target="_blank">'+escLit(l.doi)+'</a>'):'<span style="color:var(--muted)">未提供</span>';
   var html='<button class="close-btn" onclick="document.getElementById(\'lit-modal-bg\').style.display=\'none\'">×</button>';
   html+='<h3 style="font-size:16px;line-height:1.5">📄 文献详情</h3>';
-  html+='<h4 style="margin-top:12px">引用</h4><div style="font-size:13px;line-height:1.7">'+escLit(l.ref)+'</div>';
+  html+='<h4 style="margin-top:12px">完整引文 / 摘要信息</h4><div style="font-size:13px;line-height:1.8;background:#f9fbfd;padding:10px 12px;border-left:3px solid var(--accent);border-radius:0 3px 3px 0">'+escLit(l.ref)+'</div>';
+  // Try to produce structured Chinese research summary from ref string
+  if(typeof makeStructuredAbstract==='function'){
+    // extract best-effort title from ref: take first sentence
+    var titleGuess=(l.ref||'').split(/[.!?]/).slice(0,2).join('. ');
+    var pseudoPaper={title:titleGuess, abstract:(l.ref||'').length>140?(l.ref):''};
+    var s=makeStructuredAbstract(pseudoPaper);
+    if(s){
+      html+='<h4 style="margin-top:14px">🧠 智能体解读（基于引文结构化提取）</h4>';
+      html+='<table style="font-size:13px"><tr><th>研究对象</th><td>'+escLit(s.population)+'</td></tr>';
+      html+='<tr><th>方法学</th><td>'+escLit(s.method)+'</td></tr>';
+      html+='<tr><th>样本量</th><td>'+escLit(s.sample)+'</td></tr>';
+      html+='<tr><th>核心发现 / 结论</th><td>'+escLit(s.finding)+'</td></tr></table>';
+    }
+  }
   html+='<h4 style="margin-top:14px">DOI</h4><div style="font-size:13px">'+doiLink+'</div>';
   html+='<h4 style="margin-top:14px">来源标签</h4><table><tr><th>来源</th><td>'+escLit(l.src||'未标注')+'</td></tr>';
   html+='<tr><th>关联数据集</th><td>'+escLit(l.dsetTitle||'')+(l.dsetEn?(' ('+escLit(l.dsetEn)+')'):'')+'</td></tr>';
   html+='<tr><th>数据集分类</th><td>'+escLit(l.catName)+'</td></tr>';
   html+='<tr><th>主题词</th><td>'+escLit(l.topic)+'</td></tr></table>';
-  if(l.dsetId){html+='<div style="margin-top:14px"><button class="btn sm" onclick="document.getElementById(\'lit-modal-bg\').style.display=\'none\';openDset(\''+l.dsetId+'\')">查看关联数据集 →</button></div>'}
+  html+='<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">';
+  if(l.doi) html+='<button class="btn sm" onclick="window.open(\'https://doi.org/'+encodeURIComponent(l.doi)+'\',\'_blank\')">↗ 跳转 DOI 原文</button>';
+  if(l.dsetId) html+='<button class="btn sm" onclick="document.getElementById(\'lit-modal-bg\').style.display=\'none\';openDset(\''+l.dsetId+'\')">查看关联数据集 →</button>';
+  html+='<button class="btn sm" data-title="'+escLit(litShort(l.ref,120)).replace(/"/g,'&quot;')+'" data-type="paper" data-source="'+escLit(l.src||'已收录').replace(/"/g,'&quot;')+'" data-year="" data-url="'+(l.doi?('https://doi.org/'+encodeURIComponent(l.doi)):'')+'" data-doi="'+escLit(l.doi||'').replace(/"/g,'&quot;')+'" onclick="libAddPaper(this)">⭐ 加入收藏</button>';
+  html+='</div>';
   c.innerHTML=html;
   document.getElementById('lit-modal-bg').style.display='flex';
 }
