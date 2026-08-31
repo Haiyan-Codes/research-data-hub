@@ -4682,6 +4682,24 @@ else:
     </div>
 
     <div id="h-admin-body" style="display:none">
+
+      <!-- ===== 全局总链接（最简单配置：只需填这1个） ===== -->
+      <div class="about-card" style="margin-bottom:16px;border-left:5px solid #f59e0b;background:linear-gradient(135deg,#fffbeb,#ffffff)">
+        <h3 style="margin-top:0">🌐 全局百度网盘总链接 <span style="font-weight:400;color:#b45309;font-size:14px">（最简单配置：您把全部数据打包上传，只需填这 1 个链接即可！）</span></h3>
+        <p style="color:#78350f;margin:4px 0 12px">适用场景：您已将整个「卫生健康」4 大类 24 个年份组的数据全部打包为一个压缩包或文件夹，并分享了一个总链接。开启后，所有未单独配置链接的年份组、表格、PDF 都会自动跳转使用这个总链接，并在卡片上提示【在网盘内如何定位到对应的分类/年份/章节】。</p>
+        <div style="display:grid;grid-template-columns:minmax(320px,1fr) auto;gap:10px;align-items:end">
+          <label style="font-size:13px;color:#78350f">🔗 全局分享链接（整个卫生健康数据打包）<input id="h-global-url" class="input" placeholder="https://pan.baidu.com/s/xxxxxx" style="margin-top:4px"></label>
+          <label style="font-size:13px;color:#78350f">🔑 提取码（如有）<input id="h-global-pwd" class="input" placeholder="如：abcd，可留空" style="margin-top:4px;max-width:140px"></label>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#334155"><input type="checkbox" id="h-global-enable" onchange="hGlobalToggle(this)" checked> ✅ 启用全局总链接作为所有缺省年份组/PDF/表格的下载链接</label>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#334155"><input type="checkbox" id="h-global-force"> 🔒 强优先（即使填了年份组链接，也统一用全局总链接+定位提示，适合只有一个总包的用户）</label>
+        </div>
+        <div style="margin-top:10px;font-size:12.5px;color:#92400e;background:#fef9c3;padding:8px 12px;border-radius:6px;line-height:1.7">
+          💡 <b>推荐操作</b>：① 将百度网盘里打包好的总分享链接粘贴到上方 → ② 勾选"启用" → ③ 点【🧪 应用到当前会话】 → ④ 回到【🔍 智能检索】搜关键词即可，下载按钮会自动跳转。
+        </div>
+      </div>
+
       <div class="about-card" style="margin-bottom:16px">
         <h3>📘 使用说明</h3>
         <ol style="padding-left:20px;line-height:1.9">
@@ -8020,35 +8038,92 @@ document.getElementById('lit-modal-bg').addEventListener('click',function(e){if(
 var H_ADMIN_PASS='haiyan-health-2026';
 var HEALTH_INDEX=null;
 var H_LINKS={};   // {group_id:{year_folder,year_excels,year_pdfs, excels:{fname:url}, pdfs:{fname:url}}}
+var H_GLOBAL={url:'', pwd:'', enable:true, force:false};   // 全局总链接
 var H_INIT=false;
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+/* 读取/写入全局链接配置（DOM <-> H_GLOBAL） */
+function hGlobalRead(){
+  try{
+    H_GLOBAL.url=(document.getElementById('h-global-url')||{}).value||'';
+    H_GLOBAL.pwd=(document.getElementById('h-global-pwd')||{}).value||'';
+    H_GLOBAL.enable=!(document.getElementById('h-global-enable'))||document.getElementById('h-global-enable').checked;
+    H_GLOBAL.force=!!(document.getElementById('h-global-force'))&&document.getElementById('h-global-force').checked;
+  }catch(e){}
+  return H_GLOBAL;
+}
+function hGlobalWrite(){
+  try{
+    if(document.getElementById('h-global-url')) document.getElementById('h-global-url').value=H_GLOBAL.url||'';
+    if(document.getElementById('h-global-pwd')) document.getElementById('h-global-pwd').value=H_GLOBAL.pwd||'';
+    if(document.getElementById('h-global-enable')) document.getElementById('h-global-enable').checked=!!H_GLOBAL.enable;
+    if(document.getElementById('h-global-force')) document.getElementById('h-global-force').checked=!!H_GLOBAL.force;
+  }catch(e){}
+}
+function hGlobalToggle(cb){
+  var f=document.getElementById('h-global-force');
+  if(!cb.checked && f) f.checked=false;
+}
+function hGlobalHint(g, extra){
+  // 生成"网盘中定位提示"：3.卫生健康统计年鉴 → 2023 年 → [中国卫生健康统计年鉴2023EXCEL/ 章节 7-9-8 xxx.xls]
+  var parts=[esc(g.cat_cn)+'（'+esc(g.cat_key)+'）',esc(g.year)+' 年'];
+  if(extra) parts.push(esc(extra));
+  return '🎯 网盘中定位：<b>'+parts.join(' → ')+'</b>'+(H_GLOBAL.pwd?(' · 提取码：<span class="kbd" style="background:#fef3c7">'+esc(H_GLOBAL.pwd)+'</span>'):'');
+}
 function hIsGroupLinked(g){
   var l=H_LINKS[g.group_id]||{};
-  if(l.year_folder||l.year_excels||l.year_pdfs) return true;
-  if(g.excels.some(function(e){return (l.excels&&l.excels[e.fname])||e.share_url;})) return true;
-  if(g.pdfs.some(function(p){return (l.pdfs&&l.pdfs[p.fname])||p.share_url;})) return true;
-  if(g.share_urls&&(g.share_urls.year_folder||g.share_urls.year_excels||g.share_urls.year_pdfs)) return true;
-  return false;
+  var hasGroup=(l.year_folder||l.year_excels||l.year_pdfs)
+    || g.excels.some(function(e){return (l.excels&&l.excels[e.fname])||e.share_url;})
+    || g.pdfs.some(function(p){return (l.pdfs&&l.pdfs[p.fname])||p.share_url;})
+    || (g.share_urls&&(g.share_urls.year_folder||g.share_urls.year_excels||g.share_urls.year_pdfs));
+  hGlobalRead();
+  return !!hasGroup || (!!H_GLOBAL.enable && !!H_GLOBAL.url);
 }
 function hGetGroupUrls(g){
   // 聚合：索引JSON内嵌 share_urls + H_LINKS 覆盖
   var base=(g.share_urls||{});
   var ovr=H_LINKS[g.group_id]||{};
+  hGlobalRead();
+  var forceGlobal=!!(H_GLOBAL.force && H_GLOBAL.enable && H_GLOBAL.url);
+  var globalBackup=(H_GLOBAL.enable && H_GLOBAL.url)?H_GLOBAL.url:'';
   return {
-    year_folder: ovr.year_folder||base.year_folder||'',
-    year_excels: ovr.year_excels||base.year_excels||'',
-    year_pdfs: ovr.year_pdfs||base.year_pdfs||'',
+    year_folder: forceGlobal?H_GLOBAL.url:(ovr.year_folder||base.year_folder||globalBackup),
+    year_excels: forceGlobal?H_GLOBAL.url:(ovr.year_excels||base.year_excels||(globalBackup&&!ovr.year_folder?globalBackup:'')),
+    year_pdfs:   forceGlobal?H_GLOBAL.url:(ovr.year_pdfs||base.year_pdfs||(globalBackup&&!ovr.year_folder?globalBackup:'')),
     excels: Object.assign({}, base.excels_urls||{}, ovr.excels||{}),
     pdfs: Object.assign({}, base.pdfs_urls||{}, ovr.pdfs||{}),
+    _globalBackup: globalBackup,
+    _forceGlobal: forceGlobal,
+    _hasGroupNative: !!(ovr.year_folder||base.year_folder||ovr.year_excels||base.year_excels||ovr.year_pdfs||base.year_pdfs),
   };
 }
 function hGetExcelUrl(g, e, urls){
   urls=urls||hGetGroupUrls(g);
-  return (urls.excels[e.fname]||e.share_url||'') || urls.year_excels || urls.year_folder || '';
+  hGlobalRead();
+  var direct=urls.excels[e.fname]||e.share_url||'';
+  if(H_GLOBAL.force && H_GLOBAL.enable && H_GLOBAL.url) return H_GLOBAL.url;
+  if(direct) return direct;
+  if(urls.year_excels) return urls.year_excels;
+  if(urls.year_folder) return urls.year_folder;
+  if(H_GLOBAL.enable) return H_GLOBAL.url;
+  return '';
 }
 function hGetPdfUrl(g, p, urls){
   urls=urls||hGetGroupUrls(g);
-  return (urls.pdfs[p.fname]||p.share_url||'') || urls.year_pdfs || urls.year_folder || '';
+  hGlobalRead();
+  var direct=urls.pdfs[p.fname]||p.share_url||'';
+  if(H_GLOBAL.force && H_GLOBAL.enable && H_GLOBAL.url) return H_GLOBAL.url;
+  if(direct) return direct;
+  if(urls.year_pdfs) return urls.year_pdfs;
+  if(urls.year_folder) return urls.year_folder;
+  if(H_GLOBAL.enable) return H_GLOBAL.url;
+  return '';
+}
+function hUsedGlobal(urls, nativeDirectUrl){
+  // 判断当前使用的链接是否为全局回退（用于显示定位提示）
+  if(H_GLOBAL.force && H_GLOBAL.enable) return true;
+  if(nativeDirectUrl) return false;
+  if(!urls) return false;
+  return urls._forceGlobal || !!(urls._globalBackup && !urls._hasGroupNative);
 }
 
 function initHealthHub(){
@@ -8080,8 +8155,15 @@ function initHealthHub(){
         ysel.innerHTML+='<option value="'+y+'">'+y+' 年</option>';
         aysel.innerHTML+='<option value="'+y+'">'+y+' 年</option>';
       });
-      // 载入已保存链接
+      // 载入已保存链接 & 全局总链接（优先级：localStorage > meta.global_link 嵌入）
       try{var s=localStorage.getItem('HEALTH_LINKS');if(s){H_LINKS=JSON.parse(s)||{};}}catch(e){}
+      var loadedGlobalFromJSON=false;
+      if(idx.meta && idx.meta.global_link && typeof idx.meta.global_link==='object' && idx.meta.global_link.url){
+        H_GLOBAL=Object.assign({url:'',pwd:'',enable:true,force:false}, idx.meta.global_link);
+        loadedGlobalFromJSON=true;
+      }
+      try{var gs=localStorage.getItem('HEALTH_GLOBAL');if(gs){H_GLOBAL=Object.assign(H_GLOBAL, JSON.parse(gs)||{});}}catch(e){}
+      hGlobalWrite();
       // 从索引JSON本身恢复已嵌入的链接（如果用户已替换为带链接版本）
       (idx.groups||[]).forEach(function(g){
         if(!H_LINKS[g.group_id]) H_LINKS[g.group_id]={};
@@ -8227,12 +8309,17 @@ function hDoSearch(){
       html+='<div style="flex:1;min-width:220px"><h3 style="margin:0 0 6px;font-size:16px">'+esc(g.year)+'年</h3><div style="margin:4px 0 8px">'+catChip+' '+linkedChip+(r.gs&&q?' <span class="chip grey">相关性 '+r.gs+'</span>':'')+'</div>';
       html+='<div style="color:var(--muted);font-size:13px">💾 '+g.excel_count+' 张表格 · 📄 '+g.pdf_count+' 本PDF</div></div>';
       // 主下载按钮
+      var usedGlobalFolder=hUsedGlobal(r.urls, !!(r.urls._hasGroupNative));
       html+='<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">';
       if(r.urls.year_folder) html+='<a class="btn primary sm" href="'+esc(r.urls.year_folder)+'" target="_blank" rel="noopener">📦 整包下载</a>';
-      else html+='<button class="btn sm" disabled title="先在【链接录入】面板粘贴本年份组的百度网盘分享链接">📦 整包(未填)</button>';
-      if(r.urls.year_excels) html+='<a class="btn sm" href="'+esc(r.urls.year_excels)+'" target="_blank" rel="noopener">📊 Excel文件夹</a>';
-      if(r.urls.year_pdfs) html+='<a class="btn sm" href="'+esc(r.urls.year_pdfs)+'" target="_blank" rel="noopener">📚 PDF文件夹</a>';
+      else html+='<button class="btn sm" disabled title="先在【链接录入】面板粘贴【🌐 全局总链接】，一步搞定所有数据下载">📦 整包(未填)</button>';
+      if(r.urls.year_excels && r.urls.year_excels!==r.urls.year_folder) html+='<a class="btn sm" href="'+esc(r.urls.year_excels)+'" target="_blank" rel="noopener">📊 Excel文件夹</a>';
+      if(r.urls.year_pdfs && r.urls.year_pdfs!==r.urls.year_folder) html+='<a class="btn sm" href="'+esc(r.urls.year_pdfs)+'" target="_blank" rel="noopener">📚 PDF文件夹</a>';
       html+='</div></div>';
+      // 全局链接定位提示（卡片级）
+      if(usedGlobalFolder && H_GLOBAL.url){
+        html+='<div style="margin-top:10px;padding:8px 12px;background:#fffbeb;border:1px dashed #f59e0b;border-radius:8px;font-size:12.5px;color:#92400e;line-height:1.6">'+hGlobalHint(g, '整个年份组')+'</div>';
+      }
 
       // PDF 列表
       if(g.pdfs&&g.pdfs.length){
@@ -8240,8 +8327,12 @@ function hDoSearch(){
         r.pScores.slice(0,20).forEach(function(x){
           var hit=q?x.s>0:true;
           var badge=x.p.type==='目录'?'📋':(x.p.type==='扫描版'?'📸':'📑');
-          var btn=x.url?('<a class="btn xs" href="'+esc(x.url)+'" target="_blank" rel="noopener">下载</a>'):'<button class="btn xs" disabled>未配置</button>';
-          html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:6px;background:'+(hit&&q?'rgba(22,163,174,.08)':'rgba(250,250,250,1)')+'"><span style="font-size:13px;'+(hit&&q?'color:#0e7490':'')+'">'+badge+' <b>'+esc(x.p.type)+'</b> · '+esc(x.p.fname)+(q&&hit?' <span class="chip ok">匹配 '+x.s+'</span>':'')+'</span>'+btn+'</div>';
+          var directPdfUrl=((r.urls.pdfs||{})[x.p.fname]||x.p.share_url||'');
+          var useGlobalForPdf=x.url && !directPdfUrl && H_GLOBAL.enable;
+          var btnStyle=useGlobalForPdf?' style="background:#f59e0b;border-color:#d97706;color:#fff"':'';
+          var btn=x.url?('<a class="btn xs"'+btnStyle+' href="'+esc(x.url)+'" target="_blank" rel="noopener">下载</a>'):'<button class="btn xs" disabled>未配置</button>';
+          var extraHint=useGlobalForPdf?('<div style="font-size:11.5px;color:#b45309;margin-top:2px">'+hGlobalHint(g, 'PDF / '+x.p.type+' / '+x.p.fname)+'</div>'):'';
+          html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:6px;background:'+(hit&&q?'rgba(22,163,174,.08)':'rgba(250,250,250,1)')+'"><div style="flex:1"><div style="font-size:13px;'+(hit&&q?'color:#0e7490':'')+'">'+badge+' <b>'+esc(x.p.type)+'</b> · '+esc(x.p.fname)+(q&&hit?' <span class="chip ok">匹配 '+x.s+'</span>':'')+'</div>'+extraHint+'</div>'+btn+'</div>';
         });
         html+='</div></div>';
       }
@@ -8252,23 +8343,23 @@ function hDoSearch(){
         var more=r.eScores.slice(15);
         html+='<div style="margin-top:12px"><div style="font-size:13px;color:var(--muted);margin-bottom:4px">📊 匹配的表格（'+r.eScores.length+' 张）：</div>';
         html+='<div id="h-e-'+gi+'-top">';
-        shown.forEach(function(x){
+        var renderExcelRow=function(x){
           var u=x.url;
-          var btn=u?('<a class="btn xs teal" href="'+esc(u)+'" target="_blank" rel="noopener">下载表格</a>'):'<button class="btn xs" disabled title="可在【链接录入】→【单表级链接】或直接填年份组整包链接后恢复">未配置</button>';
-          html+='<div style="padding:6px 8px;margin-bottom:5px;border-radius:6px;background:rgba(245,243,255,1);border-left:3px solid var(--accent)">';
-          html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="flex:1"><div style="font-size:12.5px;color:var(--muted);margin-bottom:2px">'+(x.e.chapter?('章节 <b>'+esc(x.e.chapter)+'</b> · '):'')+'文件名：'+esc(x.e.fname)+(q?' <span class="chip ok">匹配 '+x.s+'</span>':'')+'</div><div style="font-size:13.5px"><b>'+hHighlight(x.e.title, toks)+'</b></div></div>'+btn+'</div>';
-          html+='</div>';
-        });
+          var directExcelUrl=((r.urls.excels||{})[x.e.fname]||x.e.share_url||'');
+          var useGlobalForXls=u && !directExcelUrl && H_GLOBAL.enable;
+          var btnStyle=useGlobalForXls?' style="background:#f59e0b;border-color:#d97706;color:#fff"':'';
+          var btn=u?('<a class="btn xs teal"'+btnStyle+' href="'+esc(u)+'" target="_blank" rel="noopener">下载表格</a>'):'<button class="btn xs" disabled title="可在【链接录入】→【🌐 全局总链接】里填一个链接即可为全部表格启用下载">未配置</button>';
+          var xlsHint=useGlobalForXls?('<div style="font-size:11.5px;color:#b45309;margin-top:3px">'+hGlobalHint(g, 'Excel / 章节 '+(x.e.chapter||'-')+' / '+x.e.fname)+'</div>'):'';
+          var row='<div style="padding:6px 8px;margin-bottom:5px;border-radius:6px;background:rgba(245,243,255,1);border-left:3px solid var(--accent)">';
+          row+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="flex:1"><div style="font-size:12.5px;color:var(--muted);margin-bottom:2px">'+(x.e.chapter?('章节 <b>'+esc(x.e.chapter)+'</b> · '):'')+'文件名：'+esc(x.e.fname)+(q?' <span class="chip ok">匹配 '+x.s+'</span>':'')+'</div><div style="font-size:13.5px"><b>'+hHighlight(x.e.title, toks)+'</b></div>'+xlsHint+'</div>'+btn+'</div>';
+          row+='</div>';
+          return row;
+        };
+        shown.forEach(function(x){ html+=renderExcelRow(x); });
         html+='</div>';
         if(more.length){
           html+='<div id="h-e-'+gi+'-more" style="display:none">';
-          more.forEach(function(x){
-            var u=x.url;
-            var btn=u?('<a class="btn xs teal" href="'+esc(u)+'" target="_blank" rel="noopener">下载表格</a>'):'<button class="btn xs" disabled>未配置</button>';
-            html+='<div style="padding:6px 8px;margin-bottom:5px;border-radius:6px;background:rgba(245,243,255,1);border-left:3px solid var(--accent)">';
-            html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="flex:1"><div style="font-size:12.5px;color:var(--muted);margin-bottom:2px">'+(x.e.chapter?('章节 <b>'+esc(x.e.chapter)+'</b> · '):'')+'文件名：'+esc(x.e.fname)+(q?' <span class="chip ok">匹配 '+x.s+'</span>':'')+'</div><div style="font-size:13.5px"><b>'+hHighlight(x.e.title, toks)+'</b></div></div>'+btn+'</div>';
-            html+='</div>';
-          });
+          more.forEach(function(x){ html+=renderExcelRow(x); });
           html+='</div>';
           html+='<a style="color:var(--accent);font-size:13px;cursor:pointer" id="h-e-'+gi+'-more-btn" onclick="var m=document.getElementById(\'h-e-'+gi+'-more\');var b=document.getElementById(\'h-e-'+gi+'-more-btn\');if(m.style.display===\'none\'){m.style.display=\'block\';b.textContent=\'▲ 收起剩余 '+more.length+' 张\'}else{m.style.display=\'none\';b.textContent=\'▼ 展开剩余 '+more.length+' 张\'}">▼ 展开剩余 '+more.length+' 张</a>';
         }
@@ -8372,21 +8463,39 @@ function hToggleGroup(id){
   else{el.style.display='none';btn.textContent='▼ 展开单表级链接';}
 }
 function hApplySession(){
-  // 已经 H_LINKS 直接作用，只需要刷新检索即可
+  hGlobalRead();
   hDoSearch();
-  alert('✅ 已应用：当前录入的链接已对【🔍智能检索】Tab生效（仅本浏览器当前会话）。\n记得导出JSON永久化。');
+  alert('✅ 已应用：当前录入的链接【包括🌐全局总链接】已对【🔍智能检索】Tab生效（仅本浏览器当前会话）。\n记得导出JSON永久化。');
 }
 function hSaveLS(){
-  try{localStorage.setItem('HEALTH_LINKS',JSON.stringify(H_LINKS));alert('💾 已保存 '+Object.keys(H_LINKS).length+' 个年份组的链接到本地浏览器。');}
+  try{
+    hGlobalRead();
+    localStorage.setItem('HEALTH_LINKS',JSON.stringify(H_LINKS));
+    localStorage.setItem('HEALTH_GLOBAL',JSON.stringify(H_GLOBAL));
+    alert('💾 已保存到本地浏览器：\n• '+Object.keys(H_LINKS).length+' 个年份组\n• '+(H_GLOBAL.url?'🌐 已配置全局总链接':'🌐 未配置全局总链接'));
+  }
   catch(e){alert('保存失败：'+e.message);}
 }
 function hLoadLS(){
-  try{var s=localStorage.getItem('HEALTH_LINKS');if(s){H_LINKS=JSON.parse(s)||{};hRenderAdminList();alert('↩️ 已从本地浏览器恢复 '+Object.keys(H_LINKS).length+' 个年份组。');}else alert('本地浏览器未找到已保存链接。');}
+  try{
+    var s=localStorage.getItem('HEALTH_LINKS');
+    var gs=localStorage.getItem('HEALTH_GLOBAL');
+    if(!s && !gs){alert('本地浏览器未找到已保存链接。');return;}
+    if(s) H_LINKS=JSON.parse(s)||{};
+    if(gs) H_GLOBAL=Object.assign({url:'',pwd:'',enable:true,force:false},JSON.parse(gs)||{});
+    hGlobalWrite();
+    hRenderAdminList();
+    alert('↩️ 已从本地浏览器恢复：\n• '+Object.keys(H_LINKS).length+' 个年份组\n• '+(H_GLOBAL.url?'🌐 已配置全局总链接':'🌐 未配置全局总链接'));
+  }
   catch(e){alert('读取失败：'+e.message);}
 }
 function hExportIndex(){
   if(!HEALTH_INDEX){alert('索引尚未载入');return;}
+  hGlobalRead();
   var out=JSON.parse(JSON.stringify(HEALTH_INDEX));
+  // 把全局链接写入 meta.global_link（便于跨设备生效）
+  if(!out.meta) out.meta={};
+  if(H_GLOBAL.url) out.meta.global_link=H_GLOBAL;
   var nG=0, nE=0, nP=0;
   out.groups.forEach(function(g){
     var L=H_LINKS[g.group_id]||{};
@@ -8413,7 +8522,7 @@ function hExportIndex(){
   a.href=url;a.download='health_index_with_links.json';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(function(){URL.revokeObjectURL(url);},2000);
-  alert('📤 已导出 health_index_with_links.json\n\n内含：\n• 顶层链接：'+nG+' 项\n• 单表 Excel：'+nE+' 个\n• 单本 PDF：'+nP+' 个\n\n下一步：将该文件替换 research_hub/health_data_index.json 并重新部署 GitHub Pages（或把 JSON 发给我来集成）。');
+  alert('📤 已导出 health_index_with_links.json\n\n内含：\n• 🌐 全局总链接：'+(H_GLOBAL.url?'✅ 已配置（'+H_GLOBAL.url.length+'字符）':'❌ 未配置')+'\n• 年份组顶层链接：'+nG+' 项\n• 单表 Excel：'+nE+' 个\n• 单本 PDF：'+nP+' 个\n\n下一步：将该文件替换 research_hub/health_data_index.json 并重新部署 GitHub Pages（或把 JSON 发给我来集成）。');
 }
 function hImportLinksDialog(){document.getElementById('h-import-modal').style.display='flex';}
 function hImportLinksFile(inp){
@@ -8432,8 +8541,26 @@ function hImportLinksText(){
   catch(err){alert('JSON解析失败：'+err.message);}
 }
 function hMergeLinks(idx){
-  // 支持两种导入：完整索引(带groups) 或 纯links map
+  // 支持 3 种导入：完整索引(带groups+meta.global_link) / H_LINKS map / H_GLOBAL 对象
   var added=0;
+  var globalMsg='';
+  if(idx && idx.meta && idx.meta.global_link && typeof idx.meta.global_link==='object'){
+    // meta.global_link 优先（如果 url 不为空且本地 H_GLOBAL.url 为空，或 url 不相同则覆盖提示）
+    var inc=idx.meta.global_link;
+    if(inc.url && H_GLOBAL.url!==inc.url){
+      H_GLOBAL=Object.assign({url:'',pwd:'',enable:true,force:false}, inc);
+      hGlobalWrite();
+      globalMsg='\n• 🌐 全局总链接：已导入 ✅';
+    } else if(inc.url && H_GLOBAL.url===inc.url){
+      globalMsg='\n• 🌐 全局总链接：已存在（与导入相同）';
+    }
+  }
+  // H_GLOBAL 直接导入（纯 global 格式）
+  if(idx && typeof idx==='object' && idx.url && (idx.enable!==undefined||idx.pwd!==undefined) && !idx.groups){
+    H_GLOBAL=Object.assign({url:'',pwd:'',enable:true,force:false}, idx);
+    hGlobalWrite();
+    globalMsg='\n• 🌐 全局总链接：已导入 ✅';
+  }
   if(idx && idx.groups && Array.isArray(idx.groups)){
     idx.groups.forEach(function(g){
       var L=H_LINKS[g.group_id]=(H_LINKS[g.group_id]||{excels:{},pdfs:{}});
@@ -8451,14 +8578,16 @@ function hMergeLinks(idx){
       });
     });
   } else if(idx && typeof idx==='object'){
-    // 可能是纯 H_LINKS
-    Object.keys(idx).forEach(function(gid){
-      H_LINKS[gid]=idx[gid];added++;
-    });
+    // 可能是纯 H_LINKS（或包含全局对象已处理）
+    if(!idx.url){
+      Object.keys(idx).forEach(function(gid){
+        H_LINKS[gid]=idx[gid];added++;
+      });
+    }
   }
   hRenderAdminList();
   hDoSearch();
-  alert('✅ 成功导入 '+added+' 项链接。\n\n记得：① 保存到本地浏览器  ② 导出 JSON 永久化。');
+  alert('✅ 成功导入：\n• 年份组/表级链接：'+added+' 项'+globalMsg+'\n\n记得：① 保存到本地浏览器  ② 导出 JSON 永久化。');
 }
 </script>
 
