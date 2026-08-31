@@ -8499,7 +8499,7 @@ function hEmptyWelcomeHTML(){
   dims.forEach(function(d){
     html+='<div style="padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:#fff">';
     html+='<div style="font-weight:600;margin-bottom:8px;font-size:15px">'+d.k+'</div>';
-    html+='<div style="margin-bottom:8px">'+d.tags.map(function(t){return '<a class="chip grey" style="margin:2px 2px;cursor:pointer" onclick="hQuick(\\''+t+'\\')">'+t+'</a>';}).join('')+'</div>';
+    html+='<div style="margin-bottom:8px">'+d.tags.map(function(t){return '<a class="chip grey" style="margin:2px 2px;cursor:pointer" onclick="hQuick(\''+t+'\')">'+t+'</a>';}).join('')+'</div>';
     html+='<div style="font-size:12.5px;color:var(--muted);line-height:1.6">'+d.tips+'</div></div>';
   });
   html+='</div>';
@@ -8644,7 +8644,7 @@ function hSuggestionDialogHTML(contentHTML){
          '<div style="width:100%;max-width:920px;background:#fff;border-radius:14px;box-shadow:0 30px 60px rgba(0,0,0,.3)">'+
          '<div style="padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">'+
          '<h3 style="margin:0;font-size:18px;color:#1e293b">🤖 研究建议智能体 · 基于当前检索主题与方法学文献</h3>'+
-         '<button class="btn xs" onclick="this.closest(\\'[style*=position\\\\:fixed]\\').remove()">✕ 关闭</button></div>'+
+         '<button class="btn xs" onclick="this.closest(\'[style*=fixed]\').remove()">✕ 关闭</button></div>'+
          '<div style="padding:22px 24px;max-height:75vh;overflow-y:auto;line-height:1.8">'+contentHTML+'</div></div></div>';
 }
 function hShowResearchSuggestions(){
