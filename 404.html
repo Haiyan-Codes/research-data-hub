@@ -4644,11 +4644,19 @@ else:
 
   <!-- ========== 子TAB 1: 智能检索 ========== -->
   <div id="h-tab-search">
+    <!-- 下载方式切换 -->
+    <div class="toolbar" style="flex-wrap:wrap;margin-bottom:10px;background:rgba(15,23,42,.02);border:1px solid var(--border);border-radius:10px;padding:8px 12px">
+      <span style="color:#1e293b;font-weight:600">⬇️ 下载方式：</span>
+      <button class="btn sm" id="h-mode-pan" onclick="hSetMode('pan')">🟢 百度网盘（默认）</button>
+      <button class="btn sm" id="h-mode-gh" onclick="hSetMode('github')">🔒 GitHub加密直下（推荐，秒速）</button>
+      <button class="btn sm teal" id="h-mode-both" onclick="hSetMode('both')">🔀 双模式并排</button>
+      <span id="h-mode-info" style="margin-left:auto;color:var(--muted);font-size:13px">当前：🟢 百度网盘模式 · 如需极速，请切到 🔒 GitHub 模式</span>
+    </div>
     <div class="toolbar" style="flex-wrap:wrap">
       <input class="input wide" id="h-q" placeholder="输入关键词，例如：床位数、执业医师、诊疗人次、卫生总费用、妇幼保健、中医医院…（支持中英文，空格分隔多关键词 AND）" onkeydown="if(event.key==='Enter')hDoSearch()">
       <select id="h-cat"><option value="">全部分类</option></select>
       <select id="h-year"><option value="">全部年份</option></select>
-      <select id="h-linkonly"><option value="all">显示全部</option><option value="only">仅显示已填链接</option></select>
+      <select id="h-linkonly"><option value="all">显示全部</option><option value="only">仅显示已配置下载</option></select>
       <button class="btn primary" onclick="hDoSearch()">🔎 智能检索</button>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
@@ -4698,6 +4706,35 @@ else:
         <div style="margin-top:10px;font-size:12.5px;color:#92400e;background:#fef9c3;padding:8px 12px;border-radius:6px;line-height:1.7">
           💡 <b>推荐操作</b>：① 将百度网盘里打包好的总分享链接粘贴到上方 → ② 勾选"启用" → ③ 点【🧪 应用到当前会话】 → ④ 回到【🔍 智能检索】搜关键词即可，下载按钮会自动跳转。
         </div>
+      </div>
+
+      <!-- ===== GitHub 加密直下配置 ===== -->
+      <div class="about-card" style="margin-bottom:16px;border-left:5px solid #0ea5e9;background:linear-gradient(135deg,#eff6ff,#ffffff)">
+        <h3 style="margin-top:0">🔒 GitHub 加密直下 <span style="font-weight:400;color:#0369a1;font-size:14px">（摆脱百度网盘限速/提取码！AES-256-GCM 客户端解密）</span></h3>
+        <p style="color:#1e40af;margin:4px 0 12px">Excel（7518 张）+ 小 PDF（<80MB 目录/可复制版）已加密托管在 GitHub，通过 jsDelivr 全球 CDN 极速下载。只有输入正确的<b>解密密码</b>才能还原原文件。<br><b>大扫描版 PDF（≥80MB）</b>：继续走上方【百度网盘】兜底。</p>
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;align-items:end;margin-bottom:10px">
+          <label style="font-size:13px;color:#0c4a6e">📜 manifest.json URL（加密数据清单，上传后由 step3 脚本输出）<input id="h-gh-manifest" class="input" value="https://cdn.jsdelivr.net/gh/Haiyan-Codes/research-data-hub-data@main/manifest.json" placeholder="https://cdn.jsdelivr.net/gh/Haiyan-Codes/research-data-hub-data@main/manifest.json"></label>
+          <label style="font-size:13px;color:#0c4a6e">🌐 CDN 选择<select id="h-gh-cdn" class="input" onchange="hGhRecompute()">
+            <option value="jsdelivr">jsDelivr CDN（推荐，最快）</option>
+            <option value="raw">GitHub Raw（备用）</option>
+            <option value="custom">自定义前缀</option>
+          </select></label>
+        </div>
+        <div id="h-gh-custom-wrap" style="display:none;margin-bottom:10px">
+          <label style="font-size:13px;color:#0c4a6e">🔧 自定义 CDN 前缀（末尾不加 /）<input id="h-gh-prefix" class="input" placeholder="https://cdn.example.com/data"></label>
+        </div>
+        <div style="display:grid;grid-template-columns:1.5fr 1fr auto;gap:10px;align-items:end;margin-bottom:10px">
+          <label style="font-size:13px;color:#0c4a6e">🔑 解密密码（由加密脚本 step2 设置；默认 Haiyan-HealthHub-2026!，不会上传到服务器，仅存本浏览器 session）<input type="password" id="h-gh-pwd" class="input" placeholder="解密密码，输入完成后点【加载清单并测试】"></label>
+          <label style="font-size:13px;color:#0c4a6e">
+            💾 记住密码
+            <select id="h-gh-remember" class="input">
+              <option value="session">仅本次会话（sessionStorage）</option>
+              <option value="local">直到手动清除（localStorage）</option>
+            </select>
+          </label>
+          <button class="btn primary" onclick="hGhLoadManifest()">📥 加载清单并测试</button>
+        </div>
+        <div id="h-gh-status" style="font-size:13px;color:var(--muted)">尚未加载清单。</div>
       </div>
 
       <div class="about-card" style="margin-bottom:16px">
@@ -8134,6 +8171,8 @@ function initHealthHub(){
     .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     .then(function(idx){
       HEALTH_INDEX=idx;
+      /* 兼容：GitHub 加密模块使用 g.gid，但索引 JSON 写入 group_id → 在此处补齐别名 */
+      (idx.groups||[]).forEach(function(g){ if(g.group_id && !g.gid) g.gid=g.group_id; });
       metad.innerHTML=
         '<span class="chip ok">'+idx.meta.total_groups+' 个年份组</span> '+
         '<span class="chip ok">'+idx.meta.total_excels+' 张表格</span> '+
@@ -8308,17 +8347,34 @@ function hDoSearch(){
       html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">';
       html+='<div style="flex:1;min-width:220px"><h3 style="margin:0 0 6px;font-size:16px">'+esc(g.year)+'年</h3><div style="margin:4px 0 8px">'+catChip+' '+linkedChip+(r.gs&&q?' <span class="chip grey">相关性 '+r.gs+'</span>':'')+'</div>';
       html+='<div style="color:var(--muted);font-size:13px">💾 '+g.excel_count+' 张表格 · 📄 '+g.pdf_count+' 本PDF</div></div>';
-      // 主下载按钮
+      // 主下载按钮（GitHub加密 + 百度网盘双模式）
       var usedGlobalFolder=hUsedGlobal(r.urls, !!(r.urls._hasGroupNative));
+      var ghGroupInfo = hGhGroupInfo(g);
       html+='<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">';
-      if(r.urls.year_folder) html+='<a class="btn primary sm" href="'+esc(r.urls.year_folder)+'" target="_blank" rel="noopener">📦 整包下载</a>';
-      else html+='<button class="btn sm" disabled title="先在【链接录入】面板粘贴【🌐 全局总链接】，一步搞定所有数据下载">📦 整包(未填)</button>';
-      if(r.urls.year_excels && r.urls.year_excels!==r.urls.year_folder) html+='<a class="btn sm" href="'+esc(r.urls.year_excels)+'" target="_blank" rel="noopener">📊 Excel文件夹</a>';
-      if(r.urls.year_pdfs && r.urls.year_pdfs!==r.urls.year_folder) html+='<a class="btn sm" href="'+esc(r.urls.year_pdfs)+'" target="_blank" rel="noopener">📚 PDF文件夹</a>';
+      // GitHub 加密按钮（优先）
+      if(h_mode==='github' || h_mode==='both'){
+        if(ghGroupInfo.hasAny){
+          html+='<button class="btn sm" style="background:#0ea5e9;border-color:#0284c7;color:#fff" onclick="hGhDownloadGroup(\''+g.gid+'\')" title="从 GitHub CDN 下载，客户端解密，秒速，不需提取码">🔒 GitHub整组秒下</button>';
+          if(ghGroupInfo.groupZip){
+            html+='<button class="btn sm" style="background:#1e3a8a;border-color:#1e40af;color:#fff" onclick="hGhDownload(\''+g.gid+'\',\'zip\')" title="整年度 Excel 打包 zip.enc → 解密下载原始 zip">📦 整年度ExcelZip</button>';
+          }
+        } else {
+          html+='<button class="btn sm" disabled title="该组未在 GitHub 数据清单中（可能尚未运行 step2/step3 或清单未加载）">🔒 GitHub 未就绪</button>';
+        }
+      }
+      if(h_mode==='pan' || h_mode==='both'){
+        if(r.urls.year_folder) html+='<a class="btn primary sm" href="'+esc(r.urls.year_folder)+'" target="_blank" rel="noopener">🟢 百度网盘·整包</a>';
+        else html+='<button class="btn sm" disabled title="先在【链接录入】面板粘贴【🌐 全局总链接】，一步搞定所有数据下载">🟢 整包(未填)</button>';
+        if(r.urls.year_excels && r.urls.year_excels!==r.urls.year_folder) html+='<a class="btn sm" href="'+esc(r.urls.year_excels)+'" target="_blank" rel="noopener">📊 Excel文件夹</a>';
+        if(r.urls.year_pdfs && r.urls.year_pdfs!==r.urls.year_folder) html+='<a class="btn sm" href="'+esc(r.urls.year_pdfs)+'" target="_blank" rel="noopener">📚 PDF文件夹</a>';
+      }
       html+='</div></div>';
       // 全局链接定位提示（卡片级）
       if(usedGlobalFolder && H_GLOBAL.url){
         html+='<div style="margin-top:10px;padding:8px 12px;background:#fffbeb;border:1px dashed #f59e0b;border-radius:8px;font-size:12.5px;color:#92400e;line-height:1.6">'+hGlobalHint(g, '整个年份组')+'</div>';
+      }
+      if(ghGroupInfo.skippedPdfCount){
+        html+='<div style="margin-top:8px;padding:6px 10px;background:#eff6ff;border:1px dashed #3b82f6;border-radius:6px;font-size:12.5px;color:#1e40af">ℹ️ 该组有 <b>'+ghGroupInfo.skippedPdfCount+'</b> 本大扫描版PDF（≥80MB）走【百度网盘】兜底，GitHub仅提供目录/可复制版小PDF。</div>';
       }
 
       // PDF 列表
@@ -8330,9 +8386,16 @@ function hDoSearch(){
           var directPdfUrl=((r.urls.pdfs||{})[x.p.fname]||x.p.share_url||'');
           var useGlobalForPdf=x.url && !directPdfUrl && H_GLOBAL.enable;
           var btnStyle=useGlobalForPdf?' style="background:#f59e0b;border-color:#d97706;color:#fff"':'';
-          var btn=x.url?('<a class="btn xs"'+btnStyle+' href="'+esc(x.url)+'" target="_blank" rel="noopener">下载</a>'):'<button class="btn xs" disabled>未配置</button>';
+          var panBtn=x.url?('<a class="btn xs"'+btnStyle+' href="'+esc(x.url)+'" target="_blank" rel="noopener">百度下载</a>'):'<button class="btn xs" disabled>未配置</button>';
+          // GitHub 加密按钮
+          var ghRel = hGhRelForPdf(g, x.p.fname);
+          var ghBtn;
+          if(ghRel) ghBtn='<button class="btn xs" style="background:#0ea5e9;border-color:#0284c7;color:#fff" onclick="hGhDownloadRel(\''+ghRel+'\',\''+escQ(x.p.fname)+'\')">🔒 直下解密</button>';
+          else ghBtn='<button class="btn xs" disabled title="大PDF，GitHub模式下走百度网盘兜底">大PDF · 仅百度</button>';
+
+          var twoBtns=(h_mode==='pan'?panBtn:(h_mode==='github'?ghBtn:(ghBtn+' '+panBtn)));
           var extraHint=useGlobalForPdf?('<div style="font-size:11.5px;color:#b45309;margin-top:2px">'+hGlobalHint(g, 'PDF / '+x.p.type+' / '+x.p.fname)+'</div>'):'';
-          html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:6px;background:'+(hit&&q?'rgba(22,163,174,.08)':'rgba(250,250,250,1)')+'"><div style="flex:1"><div style="font-size:13px;'+(hit&&q?'color:#0e7490':'')+'">'+badge+' <b>'+esc(x.p.type)+'</b> · '+esc(x.p.fname)+(q&&hit?' <span class="chip ok">匹配 '+x.s+'</span>':'')+'</div>'+extraHint+'</div>'+btn+'</div>';
+          html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:6px;background:'+(hit&&q?'rgba(22,163,174,.08)':'rgba(250,250,250,1)')+'"><div style="flex:1"><div style="font-size:13px;'+(hit&&q?'color:#0e7490':'')+'">'+badge+' <b>'+esc(x.p.type)+'</b> · '+esc(x.p.fname)+(q&&hit?' <span class="chip ok">匹配 '+x.s+'</span>':'')+'</div>'+extraHint+'</div>'+twoBtns+'</div>';
         });
         html+='</div></div>';
       }
@@ -8348,10 +8411,15 @@ function hDoSearch(){
           var directExcelUrl=((r.urls.excels||{})[x.e.fname]||x.e.share_url||'');
           var useGlobalForXls=u && !directExcelUrl && H_GLOBAL.enable;
           var btnStyle=useGlobalForXls?' style="background:#f59e0b;border-color:#d97706;color:#fff"':'';
-          var btn=u?('<a class="btn xs teal"'+btnStyle+' href="'+esc(u)+'" target="_blank" rel="noopener">下载表格</a>'):'<button class="btn xs" disabled title="可在【链接录入】→【🌐 全局总链接】里填一个链接即可为全部表格启用下载">未配置</button>';
+          var panBtn=u?('<a class="btn xs teal"'+btnStyle+' href="'+esc(u)+'" target="_blank" rel="noopener">百度表格</a>'):'<button class="btn xs" disabled title="可在【链接录入】→【🌐 全局总链接】里填一个链接即可为全部表格启用下载">未配置</button>';
+          var ghRel = hGhRelForExcel(g, x.e.fname);
+          var ghBtn = ghRel
+            ? '<button class="btn xs" style="background:#0ea5e9;border-color:#0284c7;color:#fff" onclick="hGhDownloadRel(\''+ghRel+'\',\''+escQ(x.e.fname)+'\')">🔒 秒下解密</button>'
+            : '<button class="btn xs" disabled title="该表未纳入 GitHub（清单未加载）">未就绪</button>';
+          var twoBtns=(h_mode==='pan'?panBtn:(h_mode==='github'?ghBtn:(ghBtn+' '+panBtn)));
           var xlsHint=useGlobalForXls?('<div style="font-size:11.5px;color:#b45309;margin-top:3px">'+hGlobalHint(g, 'Excel / 章节 '+(x.e.chapter||'-')+' / '+x.e.fname)+'</div>'):'';
           var row='<div style="padding:6px 8px;margin-bottom:5px;border-radius:6px;background:rgba(245,243,255,1);border-left:3px solid var(--accent)">';
-          row+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="flex:1"><div style="font-size:12.5px;color:var(--muted);margin-bottom:2px">'+(x.e.chapter?('章节 <b>'+esc(x.e.chapter)+'</b> · '):'')+'文件名：'+esc(x.e.fname)+(q?' <span class="chip ok">匹配 '+x.s+'</span>':'')+'</div><div style="font-size:13.5px"><b>'+hHighlight(x.e.title, toks)+'</b></div>'+xlsHint+'</div>'+btn+'</div>';
+          row+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="flex:1"><div style="font-size:12.5px;color:var(--muted);margin-bottom:2px">'+(x.e.chapter?('章节 <b>'+esc(x.e.chapter)+'</b> · '):'')+'文件名：'+esc(x.e.fname)+(q?' <span class="chip ok">匹配 '+x.s+'</span>':'')+'</div><div style="font-size:13.5px"><b>'+hHighlight(x.e.title, toks)+'</b></div>'+xlsHint+'</div>'+twoBtns+'</div>';
           row+='</div>';
           return row;
         };
@@ -8589,6 +8657,424 @@ function hMergeLinks(idx){
   hDoSearch();
   alert('✅ 成功导入：\n• 年份组/表级链接：'+added+' 项'+globalMsg+'\n\n记得：① 保存到本地浏览器  ② 导出 JSON 永久化。');
 }
+
+/* =========================================================
+ * 🔒 GitHub 加密直下模块（WebCrypto AES-256-GCM + PBKDF2）
+ * 配合 step2_encrypt_for_github.js 生成的 enc 文件头格式：
+ *  offset  len  content
+ *    0      8   MAGIC: "ENCv1.00"
+ *    8      2   RESERVED (0x00 0x00)
+ *   10      1   VERSION: 0x01
+ *   11      1   ALGO: 0x01 (AES-256-GCM)
+ *   12      1   KDF: 0x01 (PBKDF2-SHA256)
+ *   13      1   ITERS_DIV: 60 => iters = ITERS_DIV * 1000
+ *   14      1   SALT_LEN: 0x10 (16)
+ *   15      1   IV_LEN: 0x0C (12)
+ *   16      1   TAG_LEN: 0x10 (16)
+ *   17      2   NAME_LEN: UInt16 LE
+ *   19      SL  salt
+ *   19+SL   IL  iv
+ *   19+SL+IL NL  name (utf8)
+ *   ...      CTLEN ciphertext
+ *   last 16      AUTH_TAG (appended to ciphertext)
+ * ========================================================= */
+var H_GITHUB = {
+  manifestUrl: '',
+  prefix: '',
+  manifest: null,  // manifest.json 对象
+  indexByGid: {},  // gid -> {groupZip, excels:{fname:relPath}, pdfs:{fname:relPath}, skippedPdfCount}
+  byRelPath: {},   // relPath -> entry
+};
+var h_mode='both';     // 'pan' | 'github' | 'both'
+function hSetMode(m){
+  h_mode=m;
+  localStorage.setItem('HEALTH_DL_MODE', m);
+  ['pan','gh','both'].forEach(function(x){ document.getElementById('h-mode-'+x).classList.remove('teal'); });
+  var map={pan:'🟢 百度网盘模式 · 分享链接+提取码', github:'🔒 GitHub加密直下 · 解密秒下不限速', both:'🔀 双模式并排 · 手动比较'};
+  document.getElementById('h-mode-'+(m==='github'?'gh':m)).classList.add('teal');
+  document.getElementById('h-mode-info').textContent='当前：'+map[m];
+  hDoSearch();
+}
+function hGhRecompute(){
+  var cdn=document.getElementById('h-gh-cdn').value;
+  document.getElementById('h-gh-custom-wrap').style.display=(cdn==='custom')?'block':'none';
+  var manual=document.getElementById('h-gh-manifest').value.trim();
+  if(!manual) return;
+  try{
+    var m=manual.match(/^(https?:\/\/[^/]+)\/(.+)\/manifest\.json$/);
+    if(!m) return;
+    var base=m[2]; // e.g. "cdn.jsdelivr.net/gh/Haiyan-Codes/research-data-hub-data@main"
+    var pathParts=m[2].split('/');
+    var prefix;
+    if(cdn==='jsdelivr'){
+      // 尝试解析 @tag 部分，如路径里有 gh/owner/repo@tag
+      var idx=pathParts.indexOf('gh');
+      if(idx>=0 && pathParts[idx+1] && pathParts[idx+2]){
+        prefix='https://cdn.jsdelivr.net/gh/'+pathParts[idx+1]+'/'+pathParts[idx+2];  // 不带 @tag，jsdelivr 自动最新
+      } else prefix=m[1]+'/'+base;
+    } else if(cdn==='raw'){
+      // 原路径是 cdn.jsdelivr.net/gh/owner/repo@tag → github raw: raw.githubusercontent.com/owner/repo/tag
+      var i2=pathParts.indexOf('gh');
+      if(i2>=0){
+        var repo=pathParts[i2+2];
+        var at=repo.indexOf('@');
+        var branch='main';
+        if(at>=0){branch=repo.slice(at+1);repo=repo.slice(0,at);}
+        prefix='https://raw.githubusercontent.com/'+pathParts[i2+1]+'/'+repo+'/'+branch;
+      } else prefix=m[1]+'/'+base;
+    } else if(cdn==='custom'){
+      prefix=document.getElementById('h-gh-prefix').value.trim();
+    }
+    H_GITHUB.prefix=prefix;
+    document.getElementById('h-gh-status').innerHTML='🌐 前缀已更新：<code style="font-size:12px">'+esc(prefix)+'</code>';
+  }catch(e){}
+}
+function hGhEnsurePassword(requirePrompt, reasonMsg){
+  // 返回 Promise<string> 密码。若 requirePrompt 则强制弹出输入窗。
+  return new Promise(function(resolve){
+    var pwd='';
+    try{pwd=sessionStorage.getItem('HEALTH_GH_PWD')||localStorage.getItem('HEALTH_GH_PWD')||'';}catch(e){}
+    if(pwd && !requirePrompt){ resolve(pwd); return; }
+    var msg=reasonMsg?reasonMsg+'\n\n':'请输入解密密码（默认 Haiyan-HealthHub-2026!）：\n';
+    msg+='\n密码仅保存在本浏览器，不会传到任何服务器。';
+    var inp=prompt(msg, pwd||'');
+    if(inp===null){ resolve(null); return; }
+    pwd=inp;
+    var rm=document.getElementById('h-gh-remember');
+    var scope=rm?rm.value:'session';
+    try{
+      if(scope==='local') localStorage.setItem('HEALTH_GH_PWD', pwd);
+      else sessionStorage.setItem('HEALTH_GH_PWD', pwd);
+    }catch(e){}
+    resolve(pwd);
+  });
+}
+async function hGhLoadManifest(){
+  var url=document.getElementById('h-gh-manifest').value.trim();
+  if(!url){ alert('请先粘贴 manifest.json URL'); return; }
+  H_GITHUB.manifestUrl=url;
+  localStorage.setItem('HEALTH_GH_URL', url);
+  var cdn=document.getElementById('h-gh-cdn').value;
+  localStorage.setItem('HEALTH_GH_CDN', cdn);
+  document.getElementById('h-gh-custom-wrap').style.display=(cdn==='custom')?'block':'none';
+  if(cdn==='custom'){
+    var p=document.getElementById('h-gh-prefix').value.trim();
+    H_GITHUB.prefix=p;
+    localStorage.setItem('HEALTH_GH_PREFIX', p);
+  }
+  // 保存密码（根据记住方式）
+  var pwd=document.getElementById('h-gh-pwd').value.trim();
+  if(pwd){
+    var scope=document.getElementById('h-gh-remember').value;
+    try{
+      if(scope==='local') localStorage.setItem('HEALTH_GH_PWD', pwd);
+      else sessionStorage.setItem('HEALTH_GH_PWD', pwd);
+    }catch(e){}
+  }
+  document.getElementById('h-gh-status').innerHTML='⏳ 下载清单 <code>'+esc(url)+'</code> …';
+  try{
+    var r=await fetch(url, {cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    var m=await r.json();
+    H_GITHUB.manifest=m;
+    hGhBuildIndex(m);
+    hGhRecompute();
+    // 拿第一个小文件做一次密码校验（可选）
+    var statusHtml='✅ manifest 加载成功！<br>'
+      +'&nbsp;&nbsp;📦 加密文件总数：<b>'+(m.stats&&m.stats.enc_files||'?')+'</b><br>'
+      +'&nbsp;&nbsp;📊 年份组覆盖：<b>'+Object.keys(H_GITHUB.indexByGid).length+' / '+(HEALTH_INDEX?HEALTH_INDEX.groups.length:'?')+'</b><br>';
+    if(pwd){
+      var firstRel=(H_GITHUB.manifest.files && H_GITHUB.manifest.files.length && H_GITHUB.manifest.files[0].rel_path);
+      if(firstRel){
+        try{
+          await hGhTestDecrypt(firstRel, pwd);
+          statusHtml+='&nbsp;&nbsp;🔑 <b style="color:#065f46">密码校验通过！（decrypt auth tag OK）</b><br>';
+        }catch(err){
+          statusHtml+='&nbsp;&nbsp;🔑 <b style="color:#991b1b">密码校验失败：'+esc(err.message)+'</b>（请检查与 step2 设置的密码一致）<br>';
+        }
+      }
+    } else {
+      statusHtml+='&nbsp;&nbsp;🔑 <i>未输入密码 · 点击任一【🔒 下载】按钮时会弹窗要求输入</i><br>';
+    }
+    statusHtml+='&nbsp;&nbsp;🌐 CDN 前缀：<code style="font-size:12px">'+esc(H_GITHUB.prefix)+'</code>';
+    document.getElementById('h-gh-status').innerHTML=statusHtml;
+    hDoSearch();  // 卡片按钮立即更新
+  }catch(e){
+    document.getElementById('h-gh-status').innerHTML='❌ 加载失败：'+esc(e.message)+'<br>常见原因：<br>① manifest.json 尚未上传到 GitHub（先执行 step3_upload_github_data.js）<br>② 仓库是 private → 请先用 github raw 方式并且已登录 GitHub 或改用 public 仓库';
+  }
+}
+function hGhBuildIndex(m){
+  H_GITHUB.indexByGid={};
+  H_GITHUB.byRelPath={};
+  (m.files||[]).forEach(function(f){
+    H_GITHUB.byRelPath[f.rel_path]=f;
+    var g=H_GITHUB.indexByGid[f.gid] || (H_GITHUB.indexByGid[f.gid]={ groupZip:null, excels:{}, pdfs:{}, skippedPdfCount:f.skipped_pdfs||0, skippedBigExcels:f.skipped_big_excels||0 });
+    g.skippedPdfCount=Math.max(g.skippedPdfCount, f.skipped_pdfs||0);
+    g.skippedBigExcels=Math.max(g.skippedBigExcels, f.skipped_big_excels||0);
+    if(f.kind==='group_zip') g.groupZip=f.rel_path;
+    else if(f.kind==='excel') g.excels[f.orig_name]=f.rel_path;
+    else if(f.kind==='pdf') g.pdfs[f.orig_name]=f.rel_path;
+  });
+}
+function hGhGroupInfo(g){
+  var d=H_GITHUB.indexByGid[g.gid];
+  if(!d) return {hasAny:false, skippedPdfCount:0, groupZip:null, excelCount:0, pdfCount:0};
+  var hasZip=!!d.groupZip;
+  var excelCount=Object.keys(d.excels).length;
+  var pdfCount=Object.keys(d.pdfs).length;
+  return {
+    hasAny: hasZip || excelCount>0 || pdfCount>0,
+    skippedPdfCount: d.skippedPdfCount||0,
+    groupZip: d.groupZip,
+    excelCount: excelCount,
+    pdfCount: pdfCount,
+  };
+}
+function hGhRelForExcel(g, fname){
+  var d=H_GITHUB.indexByGid[g.gid]; if(!d) return '';
+  return d.excels[fname] || '';
+}
+function hGhRelForPdf(g, fname){
+  var d=H_GITHUB.indexByGid[g.gid]; if(!d) return '';
+  return d.pdfs[fname] || '';
+}
+/* 通用：下载单个 relPath + 解密 + 触发浏览器保存 */
+async function hGhDownloadRel(relPath, suggestOrigName){
+  try{
+    var pwd=await hGhEnsurePassword(false);
+    if(!pwd){ alert('您取消了输入。'); return; }
+    var prefix=H_GITHUB.prefix || (function(){
+      var m=H_GITHUB.manifestUrl.match(/^(https?:\/\/.+)\/manifest\.json$/);
+      return m?m[1]:'';
+    })();
+    if(!prefix){ alert('前缀未初始化，先点【加载清单并测试】。'); return; }
+    var url=prefix+'/'+relPath;
+    hGhToastStart('⬇️ 下载 '+suggestOrigName+' 中…');
+    var r=await fetch(url, {cache:'force-cache'});
+    if(!r.ok) throw new Error('HTTP '+r.status+' '+url);
+    var buf=await r.arrayBuffer();
+    hGhToastStart('🔐 解密中（AES-256-GCM）…');
+    var out=await hDecryptEnc(buf, pwd);
+    hGhToastClose();
+    // 保存
+    var a=document.createElement('a');
+    var blob=new Blob([out.data], { type: hMimeType(out.origName) });
+    a.href=URL.createObjectURL(blob);
+    a.download=out.origName||suggestOrigName||'download';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 3000);
+  }catch(e){
+    hGhToastClose();
+    // 密码错误 → 让用户重输一次
+    if(/tag|password|auth|checksum|decrypt/i.test(e.message)||e.name==='OperationError'){
+      if(confirm('❌ 解密失败，可能是密码错误。\n\n错误信息：'+e.message+'\n\n是否重新输入密码？')){
+        var pwd2=await hGhEnsurePassword(true, '解密失败，请重新输入密码：');
+        if(pwd2){ setTimeout(function(){ hGhDownloadRel(relPath, suggestOrigName); }, 50); }
+      }
+    } else {
+      alert('❌ 下载/解密失败：\n'+e.message+'\n\n可能原因：\n① GitHub/CDN 返回错误（网络问题或仓库私密）\n② 浏览器存储已满\n③ 文件未完整上传。');
+    }
+  }
+}
+/* 快捷：按 gid 选择下载方式（整组：zip 优先 + 所有 PDFs 单独下载） */
+function hGhDownloadGroup(gid){
+  var d=H_GITHUB.indexByGid[gid];
+  if(!d){ alert('该年份组尚未在 GitHub 数据清单中。'); return; }
+  var rels=[];
+  if(d.groupZip) rels.push(d.groupZip);
+  // PDFs 全量
+  Object.keys(d.pdfs).forEach(function(n){ rels.push(d.pdfs[n]); });
+  if(!rels.length){ alert('该年份组 GitHub 侧没有可下内容（可能该组只有大扫描版 PDF，请走百度网盘）。'); return; }
+  var title = gid;
+  try{
+    var g=(HEALTH_INDEX.groups||[]).find(function(x){return x.gid===gid;});
+    if(g) title = g.year+'年 · '+g.cat_cn;
+  }catch(e){}
+  if(!confirm('【🔒 GitHub整组秒下】· '+title+'\n\n将批量下载并解密 '+rels.length+' 个文件：\n\n  • '+(d.groupZip?'1 个整年度 Excel Zip\n':'')+'  • '+Object.keys(d.pdfs).length+' 本 PDF（小目录/可复制版）\n\n'
+      +'📌 7500 张单表 Excel 请点每张的【🔒 秒下解密】按需下载，否则浏览器会一次性卡顿。\n\n继续？')) return;
+  rels.forEach(function(rp, i){
+    var entry=H_GITHUB.byRelPath[rp];
+    setTimeout(function(){ hGhDownloadRel(rp, entry?entry.orig_name:rp); }, i*120);
+  });
+}
+function hGhDownload(gid, kind){
+  var d=H_GITHUB.indexByGid[gid]; if(!d){alert('该组不存在');return;}
+  if(kind==='zip' && d.groupZip) hGhDownloadRel(d.groupZip, (HEALTH_INDEX.groups.find(function(x){return x.gid===gid;})||{}).year+'_'+gid+'_Excel.zip');
+}
+
+/* 密码校验小测试：取文件前 64KB，走完整 header+decrypt */
+async function hGhTestDecrypt(relPath, pwd){
+  var prefix=H_GITHUB.prefix;
+  if(!prefix){
+    var m=H_GITHUB.manifestUrl.match(/^(https?:\/\/.+)\/manifest\.json$/);
+    if(m) prefix=m[1];
+  }
+  if(!prefix) throw new Error('无 CDN 前缀');
+  // 用 Range: bytes=0-65535 仅抓 64KB 即可（验证密码只需要解密 header 附近的 tag，但 GCM 只能验证最后数据 tag；所以改用 16KB 的尾部 —— 不可行）
+  // 更稳妥：下载整个文件（第一个文件通常 几MB 内），走完整 decrypt
+  var url=prefix+'/'+relPath;
+  var r=await fetch(url, {cache:'force-cache'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  var buf=await r.arrayBuffer();
+  await hDecryptEnc(buf, pwd);   // 抛错就是密码错
+  return true;
+}
+
+/* ==============================================
+ * WebCrypto 核心解密（与 Node 加密脚本严格对称）
+ * 性能：后端已改为"每年份组共享同一个 salt+key"，前端此处对 (password, salt) 做一次
+ *       AES key 缓存（内存 Map，会话级），整组下载只做 1 次 PBKDF2，后续均为秒解。
+ * ============================================== */
+var H_GH_KEY_CACHE = new Map();  // key = pwd + '|' + iters + '|' + base64(salt) -> CryptoKey(AES)
+function hGhCacheKey(pwd, iters, saltU8){
+  // 手动把 Uint8Array 转成 base64（避免依赖 btoa(unsafe binary string)）
+  var bin=''; for(var i=0;i<saltU8.length;i++) bin += String.fromCharCode(saltU8[i]);
+  try{ return pwd + '|' + iters + '|' + btoa(bin); }catch(e){ return pwd + '|' + iters + '|' + Array.prototype.join.call(saltU8,','); }
+}
+function hParseEncHeader(u8){
+  var MAGIC='ENCv1.00';
+  if(u8.length<19) throw new Error('文件过小，不是合法 .enc');
+  var magic=String.fromCharCode.apply(null, Array.prototype.slice.call(u8.subarray(0,8)));
+  if(magic!==MAGIC) throw new Error('文件头不匹配（非 step2 生成）： magic='+magic);
+  var v=u8[10]; if(v!==1) throw new Error('不支持的 enc 版本 '+v);
+  var algo=u8[11]; if(algo!==1) throw new Error('不支持的加密算法 '+algo);
+  var kdf=u8[12];  if(kdf!==1) throw new Error('不支持的 KDF '+kdf);
+  var itersDiv=u8[13];
+  var saltLen=u8[14];
+  var ivLen=u8[15];
+  var tagLen=u8[16];
+  var nameLen=u8[17] | (u8[18]<<8);
+  var off=19;
+  var salt=u8.subarray(off, off+saltLen); off+=saltLen;
+  var iv=u8.subarray(off, off+ivLen); off+=ivLen;
+  var nameU8=u8.subarray(off, off+nameLen); off+=nameLen;
+  var origName=new TextDecoder('utf8').decode(nameU8);
+  // ciphertext+tag: 剩余
+  var restLen=u8.length-off;
+  if(restLen<tagLen) throw new Error('密文长度不足');
+  var ctWithTag=u8.subarray(off);
+  var tagOffset=ctWithTag.length-tagLen;
+  return {
+    itersDiv: itersDiv,
+    salt: salt, iv: iv, origName: origName,
+    tagLen: tagLen, tagOffset: tagOffset,
+    ctWithTag: ctWithTag,
+    // AAD 计算（与 Node 一致：fixedHeader(10+1*5+2)+salt）
+    fixedHeader: u8.subarray(0,19),
+  };
+}
+async function hDecryptEnc(ab, password){
+  var u8=new Uint8Array(ab);
+  var h=hParseEncHeader(u8);
+  var iterations=h.itersDiv*10000;  // 60 -> 600,000 PBKDF2 iters
+  var cacheKey = hGhCacheKey(password, iterations, h.salt);
+  var keyPromise = H_GH_KEY_CACHE.get(cacheKey);
+  if(!keyPromise){
+    // PBKDF2（未命中缓存时）
+    var keyMaterial=await crypto.subtle.importKey('raw', new TextEncoder().encode(password), {name:'PBKDF2'}, false, ['deriveKey','deriveBits']);
+    keyPromise = crypto.subtle.deriveKey({
+      name:'PBKDF2',
+      salt: h.salt,
+      iterations: iterations,
+      hash: 'SHA-256'
+    }, keyMaterial, {name:'AES-GCM', length:256}, true, ['decrypt']);
+    H_GH_KEY_CACHE.set(cacheKey, keyPromise);
+  }
+  var key = await keyPromise;
+
+  var ciphertextOnly=h.ctWithTag.subarray(0, h.tagOffset);
+  var tag=h.ctWithTag.subarray(h.tagOffset);
+  // GCM: ct+tag 合并后设置 tagLength，或直接连起来给 API
+  // WebCrypto 的 AES-GCM 要求密文是 ct || tag，并在参数中指定 tagLength
+  var ct=h.ctWithTag;  // 最后 TAG_LEN 字节作为 tag
+  // AAD = fixedHeader(19 bytes) + salt（与 Node 一致）
+  var aad=new Uint8Array(19 + h.salt.length);
+  aad.set(h.fixedHeader, 0);
+  aad.set(h.salt, 19);
+  var ptBuf=await crypto.subtle.decrypt({
+    name:'AES-GCM',
+    iv: h.iv,
+    additionalData: aad,
+    tagLength: h.tagLen*8
+  }, key, ct);
+  return { origName: h.origName, data: ptBuf };
+}
+function hMimeType(name){
+  var n=String(name||'').toLowerCase();
+  if(n.endsWith('.xlsx')) return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  if(n.endsWith('.xls')) return 'application/vnd.ms-excel';
+  if(n.endsWith('.pdf')) return 'application/pdf';
+  if(n.endsWith('.zip')) return 'application/zip';
+  return 'application/octet-stream';
+}
+function hGhToastStart(msg){
+  var t=document.getElementById('h-gh-toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='h-gh-toast';
+    t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;background:#0ea5e9;color:#fff;padding:12px 20px;border-radius:10px;box-shadow:0 10px 30px rgba(14,165,233,.35);font-family:Inter,sans-serif;font-size:14px;font-weight:500;letter-spacing:.2px;min-width:260px;text-align:center';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.display='block';
+}
+function hGhToastClose(){
+  var t=document.getElementById('h-gh-toast'); if(t) t.style.display='none';
+}
+function escQ(s){ return String(s||'').replace(/'/g,"\\'").replace(/\\/g,'\\\\'); }
+
+/* Init GitHub 配置（页面载入时从 localStorage 恢复） */
+function hGhInit(){
+  try{
+    var url=localStorage.getItem('HEALTH_GH_URL')||'';
+    var cdn=localStorage.getItem('HEALTH_GH_CDN')||'jsdelivr';
+    var prefix=localStorage.getItem('HEALTH_GH_PREFIX')||'';
+    if(url){ document.getElementById('h-gh-manifest').value=url; }
+    if(document.getElementById('h-gh-cdn')) document.getElementById('h-gh-cdn').value=cdn;
+    document.getElementById('h-gh-custom-wrap').style.display=(cdn==='custom'?'block':'none');
+    if(cdn==='custom' && prefix) document.getElementById('h-gh-prefix').value=prefix;
+    var mode=localStorage.getItem('HEALTH_DL_MODE')||'both';
+    hSetMode(mode);
+    if(url && cdn){
+      hGhRecompute();
+      // 静默加载 manifest（如果之前配过）
+      setTimeout(function(){
+        // 已经自动输入密码的话先填
+        var pwd='';
+        try{ pwd=localStorage.getItem('HEALTH_GH_PWD')||sessionStorage.getItem('HEALTH_GH_PWD')||''; }catch(e){}
+        if(pwd && document.getElementById('h-gh-pwd')) document.getElementById('h-gh-pwd').value=pwd;
+        hGhLoadManifestSilent();
+      }, 800);
+    }
+  }catch(e){}
+}
+async function hGhLoadManifestSilent(){
+  try{
+    var url=document.getElementById('h-gh-manifest').value.trim();
+    if(!url) return;
+    H_GITHUB.manifestUrl=url;
+    var r=await fetch(url, {cache:'no-store'});
+    if(!r.ok) return;
+    var m=await r.json();
+    H_GITHUB.manifest=m;
+    hGhBuildIndex(m);
+    hGhRecompute();
+    var pwd=document.getElementById('h-gh-pwd').value;
+    var ok='✅ 已自动加载清单（'+Object.keys(H_GITHUB.indexByGid).length+' 年份组）';
+    if(pwd) ok+=' · 已记住密码';
+    document.getElementById('h-gh-status').textContent=ok;
+    if(typeof hDoSearch==='function') hDoSearch();
+  }catch(e){}
+}
+/* 页面加载：如果是卫生健康页，调用 hGhInit */
+(function(){
+  // 绑到原 switchHealth 后的 init 末尾执行（由已有的 pageHealthMount 触发）
+  var origMount = window.pageHealthMount;
+  window.pageHealthMount = function(){
+    if(origMount) try{ origMount(); }catch(e){}
+    hGhInit();
+  };
+})();
 </script>
 
 
