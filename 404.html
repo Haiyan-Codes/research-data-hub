@@ -4658,6 +4658,7 @@ else:
       <select id="h-year"><option value="">全部年份</option></select>
       <select id="h-linkonly"><option value="all">显示全部</option><option value="only">仅显示已配置下载</option></select>
       <button class="btn primary" onclick="hDoSearch()">🔎 智能检索</button>
+      <button class="btn" style="background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;border-color:#4f46e5" onclick="hShowResearchSuggestions()">🤖 研究建议</button>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
       <span style="color:var(--muted);font-size:13px;align-self:center">💡 推荐快速检索：</span>
@@ -8275,6 +8276,13 @@ function hDoSearch(){
   var cat=document.getElementById('h-cat').value;
   var yr=document.getElementById('h-year').value;
   var linkOnly=document.getElementById('h-linkonly').value==='only';
+  /* ---- UX: 空条件（无关键词/无分类/无年份/非链接筛选） → 显示引导页，不渲染24组大列表 ---- */
+  var isEmptyCondition = (!q) && (!cat) && (!yr) && (!linkOnly);
+  if(isEmptyCondition){
+    document.getElementById('h-summary').style.display='none';
+    document.getElementById('h-results').innerHTML=hEmptyWelcomeHTML();
+    return;
+  }
   var toks=hTokenize(q);
   var groups=(HEALTH_INDEX.groups||[]).slice();
   if(cat) groups=groups.filter(function(g){return g.cat_key===cat;});
@@ -8319,12 +8327,11 @@ function hDoSearch(){
     // 如果有查询，只保留 eScores>0 或 pdf 匹配的表；否则保留全部
     if(q){
       eScores=eScores.filter(function(x){return x.s>0;});
-      // 如果所有 excel 都 0 分 且 PDF 不匹配，且 group 分数只是刚好等于 0？已经 gs>0 保留
     }
     scoredGroups.push({g:g, gs:gs, lkd:lkd, urls:urls, eScores:eScores, pScores:pScores});
     sumG++; sumLinked+=(lkd?1:0); sumE+=eScores.length; sumP+=pScores.filter(function(x){return !q||x.s>0;}).length;
   });
-  // 排序：有查询按 score desc，无查询按 cat+year desc
+  // 排序：有查询按 score desc，有筛选按 cat+year desc
   if(q) scoredGroups.sort(function(a,b){return b.gs-a.gs;});
   else scoredGroups.sort(function(a,b){return (a.g.cat_cn<b.g.cat_cn?-1:a.g.cat_cn>b.g.cat_cn?1:0)||(a.g.year<b.g.year?1:-1);});
 
@@ -8333,7 +8340,7 @@ function hDoSearch(){
   document.getElementById('h-sum-e').textContent=sumE;
   document.getElementById('h-sum-p').textContent=sumP;
   document.getElementById('h-sum-linked').textContent=sumLinked;
-  sum.style.display=(sumG>0||q)?'block':'none';
+  sum.style.display=(sumG>0)?'block':'none';
 
   var html='';
   if(scoredGroups.length===0){
@@ -8458,6 +8465,298 @@ function hHighlight(text, toks){
     }catch(e){}
   });
   return s;
+}
+
+/* ========== 空引导页（不再一次性显示全部7518张表） ========== */
+function hEmptyWelcomeHTML(){
+  var idx=HEALTH_INDEX||{}; var meta=idx.meta||{}; var cats=idx.categories||[];
+  var groups=idx.groups||[];
+  var years=[].concat.apply([],groups.map(function(g){return g.year&&g.year!=='未知'?[+g.year]:[];})).sort();
+  var yMin=years.length?years[0]:'-'; var yMax=years.length?years[years.length-1]:'-';
+  var yRange=(yMin===yMax)?yMin:(yMin+'-'+yMax);
+  var html='<div style="max-width:1080px;margin:0 auto">';
+  // Hero
+  html+='<div style="background:linear-gradient(135deg,#0ea5e9,#7c3aed);color:#fff;padding:28px 32px;border-radius:16px;margin-bottom:20px;box-shadow:0 10px 30px rgba(14,165,233,.2)">';
+  html+='<h2 style="margin:0 0 6px;font-size:24px">🏥 卫生健康数据智能库 · 7518 张年鉴表已就绪</h2>';
+  html+='<p style="margin:0;opacity:.94;line-height:1.7;font-size:14.5px">覆盖 <b>'+cats.length+'</b> 大分类 · 共 <b>'+(meta.total_groups||0)+'</b> 个年份组（'+yRange+'）· <b>'+(meta.total_excels||0)+'</b> 张 Excel 表格 · <b>'+(meta.total_pdfs||0)+'</b> 本 PDF 说明文档。<br>请在上方输入关键词或点击下方推荐标签，系统仅返回<strong style="color:#fef08a">与检索相关</strong>的数据集，不再一次性展示全部内容。</p>';
+  html+='<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">';
+  html+='<button class="btn sm" onclick="hQuick(\'床位数 病床使用率\')" style="background:#fff;color:#1e40af;border-color:#fff">🛏️ 医疗资源（床位/人力）</button>';
+  html+='<button class="btn sm" onclick="hQuick(\'诊疗人次 门诊 住院\')" style="background:#fff;color:#1e40af;border-color:#fff">🏥 医疗服务利用</button>';
+  html+='<button class="btn sm" onclick="hQuick(\'卫生总费用 医疗费用\')" style="background:#fff;color:#1e40af;border-color:#fff">💰 卫生经费与费用</button>';
+  html+='<button class="btn sm" onclick="hQuick(\'孕产妇死亡率 儿童死亡率 妇幼\')" style="background:#fff;color:#1e40af;border-color:#fff">👩‍👧 妇幼与健康结果</button>';
+  html+='<button class="btn sm" onclick="hShowResearchSuggestions()" style="background:#fef08a;color:#92400e;border-color:#fde047;font-weight:600">🤖 查看研究建议与方法</button>';
+  html+='</div></div>';
+  // 数据维度卡片
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:20px">';
+  var dims=[
+    {k:'🏥 医疗资源',tags:['机构数','床位数','卫生人员','执业医师','护士','设备','房屋建筑面积','每千人口'],tips:'供给侧可及性与公平性研究的核心维度'},
+    {k:'💊 医疗服务',tags:['诊疗人次','门诊','住院','入院','出院','床位使用率','平均住院日','医师工作量'],tips:'服务利用、效率评估、医院运营分析'},
+    {k:'💰 卫生经费',tags:['卫生总费用','政府卫生支出','医药费用','门诊次均费用','住院次均费用','收入支出','医保'],tips:'健康经济学、筹资公平性、灾难性支出'},
+    {k:'👩‍👧 妇幼与人口',tags:['孕产妇死亡率','婴儿死亡率','预期寿命','出生率','妇幼保健','托育','人口年龄结构','性别比'],tips:'健康结果、人口结构变化、公共卫生成效'},
+    {k:'🌿 中医药',tags:['中医','中医药','中医医院','中医诊疗','中医类机构','中医人员','中医院床位数'],tips:'传统医学发展、中西医比较'},
+    {k:'🏘️ 基层医疗',tags:['基层','社区卫生服务中心','乡镇卫生院','村卫生室','基层诊疗','全科医生'],tips:'分级诊疗、基层可及性、医疗资源下沉'},
+  ];
+  dims.forEach(function(d){
+    html+='<div style="padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:#fff">';
+    html+='<div style="font-weight:600;margin-bottom:8px;font-size:15px">'+d.k+'</div>';
+    html+='<div style="margin-bottom:8px">'+d.tags.map(function(t){return '<a class="chip grey" style="margin:2px 2px;cursor:pointer" onclick="hQuick(\\''+t+'\\')">'+t+'</a>';}).join('')+'</div>';
+    html+='<div style="font-size:12.5px;color:var(--muted);line-height:1.6">'+d.tips+'</div></div>';
+  });
+  html+='</div>';
+  // 下载模式说明
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px">';
+  html+='<div style="padding:16px 18px;background:rgba(16,185,129,.06);border:1px solid #6ee7b7;border-radius:12px">';
+  html+='<div style="font-weight:600;margin-bottom:6px;font-size:15px;color:#065f46">🟢 百度网盘模式（兜底）</div>';
+  html+='<div style="font-size:13px;color:#047857;line-height:1.7">大扫描版 PDF 继续走百度网盘，在【链接录入】面板填「🌐 全局总链接」一步为所有数据启用下载。支持五级定位提示自动跳转。</div></div>';
+  html+='<div style="padding:16px 18px;background:rgba(14,165,233,.06);border:1px solid #7dd3fc;border-radius:12px">';
+  html+='<div style="font-weight:600;margin-bottom:6px;font-size:15px;color:#075985">🔒 GitHub 加密直下（推荐）</div>';
+  html+='<div style="font-size:13px;color:#0369a1;line-height:1.7">7518 张 Excel 已通过 AES-256-GCM 加密并托管 GitHub，走 jsDelivr 全球 CDN。客户端解密，零限速，零提取码。在管理面板填入解密密码 <span style="font-family:monospace;background:#fff;padding:1px 6px;border-radius:3px">Haiyan-HealthHub-2026!</span> 后点击【📥 加载清单并测试】即可启用。</div></div>';
+  html+='<div style="padding:16px 18px;background:rgba(167,139,250,.1);border:1px solid #c4b5fd;border-radius:12px">';
+  html+='<div style="font-weight:600;margin-bottom:6px;font-size:15px;color:#5b21b6">🤖 研究建议智能体（新增）</div>';
+  html+='<div style="font-size:13px;color:#6d28d9;line-height:1.7">输入关键词后点击【🤖 研究建议】，系统根据匹配到的数据主题自动输出：① 研究设计建议（面板/趋势/DID/断点回归）② 方法学参考文献 ③ 变量搭配指南 ④ 5条可研究问题示例。</div></div>';
+  html+='</div></div>';
+  return html;
+}
+
+/* ========== 研究建议智能体：基于检索主题 + 方法库 + 文献 ========== */
+function hResearchMethodBank(){
+  /* 方法→研究设计映射库：关键词命中的主题 → 推荐研究设计与对应方法学参考 */
+  return [
+    {kw:['床位数','病床','床位','卫生人员','执业医师','卫生技术人员','每千人口','机构数','医院数','村卫生室','基层医疗','社区卫生','乡镇卫生院','医疗资源','卫生资源','护士','医技人员','卫生人力','设备','建筑面积'],
+     topic:'🏥 医疗资源供给与公平性',
+     designs:[
+       {n:'省际/城乡资源配置公平性分析',m:'计算Gini系数、Theil指数、Atkinson指数；按东中西/城乡分解贡献；洛伦兹曲线可视化。'},
+       {n:'空间可达性与布局优化',m:'2SFCA两步移动搜索法或增强E2SFCA；按地理单元计算可达性；GIS或R的sf/lwgeom包。'},
+       {n:'面板固定效应模型',m:'Y_it = α + β资源投入_it + 控制变量(经济/人口/政策) + 固定省/年效应 + ε_it；Stata: xtreg, R: plm/fixest。'},
+       {n:'资源-产出效率前沿分析',m:'DEA数据包络分析（BBC/CCR）或SFA随机前沿分析；评估医院/地区卫生系统综合效率。'},
+     ],
+     vars:{y:'病床使用率、出院人次、医师日均担负诊疗、平均住院日',x:'床位数、卫技人员数、每千人口卫技、固定资产额',ctrl:'人均GDP、城镇化率、老龄化率、财政医疗卫生支出、人口密度'},
+     questions:[
+       '我国省际卫生资源配置的城乡差距在2003-2023年间是收敛还是扩大？哪些因素贡献最大？',
+       '分级诊疗政策（2015前后）是否显著改善了基层医疗卫生机构的床位和人力配置？使用DID检验。',
+       '按每千人口标准测算：31个省份在2025年达到WHO推荐目标的缺口有多大？分省给出补齐优先级。'
+     ]},
+    {kw:['诊疗人次','门诊','住院','入院','出院','床位使用率','平均住院日','医师工作量','诊疗','门诊服务','住院服务','就诊率','两周就诊率','住院率'],
+     topic:'🏥 医疗服务利用与效率评估',
+     designs:[
+       {n:'时间序列趋势分解',m:'STL分解或X-13ARIMA-SEATS；分离长期趋势、季节性与政策冲击异常。'},
+       {n:'人群利用差异分解',m:'按年龄/性别/城乡/收入分组的Oaxaca-Blinder分解；理解两周就诊率/住院率差异来源。'},
+       {n:'计数/零膨胀模型',m:'诊疗人次/住院次数为计数型；使用泊松、负二项、ZIP/ZTNB；Stata:nbreg/zip，R:glm.nb/pscl。'},
+       {n:'医院效率生产函数',m:'以床位/人员/支出为投入，诊疗/出院为产出，超越对数随机前沿模型；测算技术效率TE。'},
+     ],
+     vars:{y:'两周就诊率、住院率、医院平均住院日、床位使用率、门诊/出院人次',x:'医师数、床位数、固定资产、医保覆盖率',ctrl:'慢性病患病率、年龄结构、文盲率、人均收入、距最近医疗机构时间'},
+     questions:[
+       'COVID-19疫情对我国2020-2023年住院服务量造成的冲击规模有多大？不同等级医院恢复路径是否不同？',
+       '新农合与城镇居民医保合并后，对农村居民两周就诊率和住院率的政策净效应是多少？',
+       '哪些省份公立医院运行效率持续低于全国平均？是否存在"高投入-低产出"的资源冗余？'
+     ]},
+    {kw:['卫生总费用','卫生支出','政府卫生支出','医疗费用','医药费用','门诊费用','住院费用','次均费用','医保','生育保险','医疗救助','筹资','收支','收入支出','财政'],
+     topic:'💰 健康经济学与卫生筹资公平性',
+     designs:[
+       {n:'灾难性卫生支出与致贫测算',m:'WHO/World Bank标准方法（40%非食品支出阈值或10%总支出阈值）；集中指数CI，Kakwani进度指数。'},
+       {n:'费用驱动因素分解',m:'Oaxaca-Blinder或两部模型（First probit of visit; Then log-Gamma on positive spending; MM-estimator robust）。'},
+       {n:'政策准自然实验',m:'医保整合/药品零加成/按病种付费改革 → DID / 合成控制SCM / RDi（若有阈值）。'},
+     ],
+     vars:{y:'次均门诊/住院费用、自费比例、卫生总费用占GDP比重、灾难性支出率',x:'筹资结构（政府/社会/个人）、补偿比、药占比、DRG/DIP改革时点',ctrl:'家庭可支配收入、疾病谱结构、年龄结构、教育程度、医疗机构等级'},
+     questions:[
+       '药品零加成政策实施后，公立医院次均费用是否下降？检查"以耗养医"是否向检查项目转移。',
+       '我国卫生总费用个人现金支出占比从2003年的55%降至2023年不足27%，此筹资结构变化对健康公平集中指数的边际贡献？',
+       '城乡居民基本医保筹资标准提高1倍时，是否显著降低农村家庭的灾难性卫生支出发生率？'
+     ]},
+    {kw:['孕产妇死亡率','婴儿死亡率','5岁以下儿童死亡率','妇幼','预期寿命','两周患病率','慢性病患病率','高血压','糖尿病','疾病','死亡率','死亡','健康状况','患病率','发病率','传染病','食源性','职业病','出生缺陷'],
+     topic:'👩‍👧 公共卫生结局与疾病负担',
+     designs:[
+       {n:'死亡率Joinpoint趋势分析',m:'Joinpoint回归识别显著拐点；年度百分比变化APC、年均变化AAPC。'},
+       {n:'空间流行病学',m:'省级/县级传染病或慢性病患病率空间Moran\'s I；LISA聚集图；时空扫描SaTScan。'},
+       {n:'生存分析 / Cox比例风险',m:'若有随访队列或疾病登记数据：Kaplan-Meier + Cox PH；比例风险假设检验（Schoenfeld残差）。'},
+       {n:'DALY/YLD估算框架',m:'GBD 2021方法学：患病率×伤残权重 YLD + 过早死亡×剩余寿命 YLL = DALY。'},
+     ],
+     vars:{y:'MMR、IMR、U5MR、LE、慢性病患病率、甲乙类传染病发病率/死亡率',x:'妇幼保健院人员数、卫生监督频次、疾控人员、卫生厕所普及率、儿童疫苗接种率',ctrl:'人均GDP、教育、女性识字率、城乡供水、卫生基础设施、空气质量'},
+     questions:[
+       '我国2003-2023年孕产妇死亡率下降趋势在哪个年份出现了显著拐点？是否对应妇幼卫生政策调整？',
+       '高血压和糖尿病患病率在省级层面是否呈现显著空间聚集？经济/饮食/老龄化因素的相对贡献？',
+       '疾病预防控制中心人力配置达标率是否显著预测了甲乙类传染病的发病率下降？面板双向固定效应+工具变量。'
+     ]},
+    {kw:['中医','中医药','中医类','中医医院','中医诊疗','中医人员','中医床位数','中医技术'],
+     topic:'🌿 中医药发展与服务利用',
+     designs:[
+       {n:'供需匹配度评价',m:'构建TOPSIS综合指数（供给：机构/人力/床位 vs 需求：门诊/出院）；耦合协调度模型。'},
+       {n:'中西医服务利用差异分解',m:'Blinder-Oaxaca或Fairlie非线性分解；比较中医与非中医机构的费用、效率与患者特征。'},
+       {n:'政策干预（如中医药法2017）评估',m:'DID：试点省vs未试点；平行趋势检验 + Event study plot。'},
+     ],
+     vars:{y:'中医诊疗人次、中医出院人次、中医院门诊费用、中医医保报销比例',x:'中医类机构数、中医人员数、中医床位数、中医院校毕业生数',ctrl:'人口老龄化、人均收入、医保参保率、地方财政对中医药投入'},
+     questions:[
+       '《中医药法》2017实施后，中医类医院服务量（门诊/出院）是否出现统计上显著的结构性增长？',
+       '各省中医药资源配置与区域老龄化程度的匹配度如何？是否存在"供给错配"现象？',
+       '中西医医院对同一病种的次均住院费用差异，有多少来自机构本身？有多少来自患者结构？（Fairlie分解）'
+     ]},
+    {kw:['教育经费','财政','教育','学校','学生','教职工'],
+     topic:'📚 教育经费投入与配置',
+     designs:[
+       {n:'生均经费地区差异收敛性检验',m:'σ收敛（变异系数/Gini）、β收敛（面板回归ln(T1/T0)~lnT0）、俱乐部收敛Phillips-Sul。'},
+       {n:'政策断点评估',m:'义务教育保障机制改革/营养改善计划 → 利用年份阈值进行RD或DID。'},
+     ],
+     vars:{y:'生均教育经费、辍学率、师生比、人均校舍建筑面积',x:'财政教育拨款、学杂费收入、捐赠与集资',ctrl:'人均GDP、城镇化率、少数民族比例、留守儿童比例、县/校级别'},
+     questions:[
+       '我国省际生均义务教育经费差距近20年是否收敛？欠发达省份的"追赶速度"年均多少？',
+       '农村义务教育学生营养改善计划是否显著降低了农村地区辍学率？DID+多省市证据。',
+       '县财政教育支出占比与县内文盲率是否存在双向因果？使用工具变量估计。'
+     ]},
+  ];
+}
+function hFindMethodProfile(q, cat, yr, toks){
+  var bank = hResearchMethodBank();
+  var scores = bank.map(function(p){
+    var s=0;
+    p.kw.forEach(function(k){
+      var kl=k.toLowerCase();
+      toks.forEach(function(t){ if(kl.indexOf(t)>=0 || t.indexOf(kl.slice(0,2))>=0) s+= (k.length>=3?3:1); });
+    });
+    if(cat){
+      if(p.topic.indexOf('教育')>=0 && cat.indexOf('教育')>=0) s+=5;
+      if(p.topic.indexOf('中医')>=0 && cat.indexOf('卫生健康')>=0) s+=1;
+    }
+    return {p:p, s:s};
+  }).sort(function(a,b){return b.s-a.s;});
+  return scores;
+}
+function hFindLiteratureReferences(profile, q){
+  /* 从文献库找匹配方法学或主题的文献 */
+  try {
+    var lit = (typeof LITERATURE !== 'undefined') ? (LITERATURE.items || LITERATURE.docs || LITERATURE.papers || LITERATURE) : [];
+    if(!Array.isArray(lit) || !lit.length) return [];
+    var kw = (profile?p.p.kw.join(' '):'') + ' ' + q;
+    var kwl = kw.toLowerCase();
+    var toks = kwl.split(/[\s,，、；;。]+/).filter(function(t){return t.length>=2;});
+    var scored = [];
+    lit.slice(0, 500).forEach(function(p){
+      var blob = [p.title||'', p.abstract||'', p.journal||'', (p.keywords||[]).join(' ')].join(' ').toLowerCase();
+      var s=0;
+      toks.forEach(function(t){if(blob.indexOf(t)>=0)s+=t.length;});
+      if(s>0) scored.push({p:p, s:s});
+    });
+    scored.sort(function(a,b){return b.s-a.s;});
+    return scored.slice(0,4);
+  } catch(e){return [];}
+}
+function hSuggestionDialogHTML(contentHTML){
+  return '<div style="position:fixed;inset:0;background:rgba(15,23,42,.65);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto" onclick="if(event.target===this)this.remove()">'+
+         '<div style="width:100%;max-width:920px;background:#fff;border-radius:14px;box-shadow:0 30px 60px rgba(0,0,0,.3)">'+
+         '<div style="padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">'+
+         '<h3 style="margin:0;font-size:18px;color:#1e293b">🤖 研究建议智能体 · 基于当前检索主题与方法学文献</h3>'+
+         '<button class="btn xs" onclick="this.closest(\\'[style*=position\\\\:fixed]\\').remove()">✕ 关闭</button></div>'+
+         '<div style="padding:22px 24px;max-height:75vh;overflow-y:auto;line-height:1.8">'+contentHTML+'</div></div></div>';
+}
+function hShowResearchSuggestions(){
+  var q=document.getElementById('h-q').value.trim();
+  var cat=document.getElementById('h-cat').selectedOptions[0]?.text || '';
+  var yr=document.getElementById('h-year').value;
+  var toks=hTokenize(q);
+  // 1) 数据画像
+  var idx=HEALTH_INDEX||{}; var groups=(idx.groups||[]).slice();
+  if(document.getElementById('h-cat').value) groups=groups.filter(function(g){return g.cat_key===document.getElementById('h-cat').value;});
+  if(yr) groups=groups.filter(function(g){return g.year===yr;});
+  var groups2=groups;
+  var topTitles=[];
+  groups2.slice(0,5).forEach(function(g){
+    (g.excels||[]).slice(0,3).forEach(function(e){
+      if(topTitles.indexOf(e.title)<0) topTitles.push(e.title);
+    });
+  });
+  topTitles = topTitles.slice(0,12);
+  var catSet = {}; groups2.forEach(function(g){catSet[g.cat_cn]=1;});
+  var catList = Object.keys(catSet);
+  var years=[].concat.apply([],groups2.map(function(g){return g.year&&g.year!=='未知'?[+g.year]:[];})).sort();
+  var yMin=years.length?years[0]:'-'; var yMax=years.length?years[years.length-1]:'-';
+  var yRange=(!yr&&yMin!=='-')?(yMin===yMax?yMin:(yMin+' 至 '+yMax)):(yr||'-');
+  var html='';
+  // Sec 1 数据画像
+  html+='<div style="background:linear-gradient(135deg,#eff6ff,#eef2ff);border-radius:12px;padding:16px 18px;margin-bottom:16px">';
+  html+='<div style="font-weight:600;font-size:15.5px;color:#1e3a8a;margin-bottom:8px">📊 一、当前检索的数据画像</div>';
+  html+='<div style="font-size:14px;color:#1e293b;line-height:1.9">';
+  if(!q && !yr && !document.getElementById('h-cat').value){
+    html+='未设置关键词或筛选 → 以下为整个卫生健康智能库的<strong>整体数据结构</strong>建议。若输入 <em style="background:#fef08a">具体关键词</em>（如：床位数、孕产妇死亡率、卫生总费用），建议将更具针对性。<hr style="margin:10px 0;border:none;border-top:1px dashed #93c5fd">';
+  }
+  html+='<b>关键词：</b>'+(q?('<span style="background:#fef08a;padding:1px 6px;border-radius:3px">'+esc(q)+'</span>'):'<em style="color:#64748b">（未设置）</em>')+'<br>';
+  html+='<b>数据分类：</b>'+(catList.length?catList.map(function(c){return '<span class="chip teal">'+esc(c)+'</span>';}).join(' '):'<em style="color:#64748b">全部</em>')+' &nbsp;&nbsp; <b>时间跨度：</b><span class="chip ok">'+yRange+'年</span><br>';
+  html+='<b>覆盖年份组：</b>'+groups2.length+' 组 &nbsp; <b>预计表格数：</b>'+groups2.reduce(function(s,g){return s+((g.excels||[]).filter(function(e){var tb=(e.title||'').toLowerCase();return !q||toks.every(function(t){return tb.indexOf(t)>=0;});}).length);},0)+' 张 &nbsp; <b>PDF：</b>'+groups2.reduce(function(s,g){return s+(g.pdf_count||0);},0)+' 本<br>';
+  if(topTitles.length){
+    html+='<b>代表性核心表格标题：</b><div style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;font-size:13px;color:#334155">';
+    topTitles.forEach(function(t){html+='<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">• '+esc(t)+'</div>';});
+    html+='</div>';
+  }
+  html+='</div></div>';
+  // Sec 2 研究设计建议
+  var ranked = hFindMethodProfile(q, cat, yr, toks);
+  var topProfiles = ranked.filter(function(r){return r.s>0;}).slice(0,3);
+  if(!topProfiles.length) topProfiles = ranked.slice(0,2);
+  html+='<div style="margin-bottom:16px">';
+  html+='<div style="font-weight:600;font-size:15.5px;color:#5b21b6;margin-bottom:10px">🧭 二、推荐研究设计（'+topProfiles.length+' 个匹配主题）</div>';
+  topProfiles.forEach(function(r,ri){
+    var p=r.p;
+    html+='<div style="border:1px solid #e0e7ff;border-radius:12px;padding:14px 16px;margin-bottom:10px;background:#fff">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">';
+    html+='<span style="background:linear-gradient(135deg,#8b5cf6,#4f46e5);color:#fff;padding:4px 10px;border-radius:20px;font-size:12.5px;font-weight:600">'+p.topic+'</span>';
+    if(r.s>0) html+='<span class="chip grey">匹配分 '+r.s+'</span>';
+    html+='</div>';
+    html+='<ol style="margin:0 0 8px 22px;padding:0;color:#1e293b;font-size:14px;line-height:1.9">';
+    p.designs.forEach(function(d){
+      html+='<li><b>'+esc(d.n)+'</b>：<span style="color:#475569">'+esc(d.m)+'</span></li>';
+    });
+    html+='</ol>';
+    html+='<div style="background:#f8fafc;padding:8px 12px;border-radius:8px;font-size:13px;line-height:1.8;border-left:3px solid #6366f1"><b>🎯 变量搭配建议：</b><br>';
+    html+='<b style="color:#047857">Y（被解释变量）：</b>'+esc(p.vars.y)+'<br>';
+    html+='<b style="color:#1d4ed8">X（核心解释）：</b>'+esc(p.vars.x)+'<br>';
+    html+='<b style="color:#78350f">Ctrl（控制变量）：</b>'+esc(p.vars.ctrl)+'</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  // Sec 3 方法学参考文献
+  html+='<div style="margin-bottom:16px">';
+  html+='<div style="font-weight:600;font-size:15.5px;color:#0e7490;margin-bottom:10px">📚 三、相关方法学 / 主题参考文献（从平台文献库检索）</div>';
+  var refs=[];
+  topProfiles.forEach(function(r){refs=refs.concat(hFindLiteratureReferences(r, q));});
+  // 去重
+  var seen={}; refs=refs.filter(function(r){var k=(r.p.doi||r.p.pmid||r.p.title);if(!k||seen[k])return false;seen[k]=1;return true;}).slice(0,6);
+  if(!refs.length){
+    html+='<div class="empty-tip">当前主题未在文献库中检索到高匹配条目。建议先在【🔍 文献/数据集检索】Tab搜索相关方法论文献。</div>';
+  } else {
+    html+='<div style="font-size:13.5px;color:#0f172a;line-height:1.9">';
+    refs.forEach(function(r,i){
+      var p=r.p; var link=p.url||(p.doi?'https://doi.org/'+p.doi:(p.pmid?'https://pubmed.ncbi.nlm.nih.gov/'+p.pmid+'/':'#'));
+      html+='<div style="border:1px solid #a5f3fc;border-radius:8px;padding:8px 12px;margin-bottom:6px;background:#ecfeff">';
+      html+='<div style="font-weight:500"><a href="'+esc(link)+'" target="_blank" rel="noopener" style="color:#0e7490;text-decoration:none">['+(i+1)+'] '+esc(p.title||'(无标题)')+'</a></div>';
+      var meta=[p.authors&&p.authors[0]?esc(p.authors[0])+' 等':''];
+      if(p.journal) meta.push('<em>'+esc(p.journal)+'</em>');
+      if(p.year) meta.push(p.year);
+      if(p.doi) meta.push('DOI:'+esc(p.doi));
+      if(p.pmid) meta.push('PMID:'+esc(p.pmid));
+      html+='<div style="color:#475569;font-size:12.5px">'+meta.join(' · ')+' <span class="chip grey">相关分 '+r.s+'</span></div>';
+      if(p.abstract) html+='<div style="color:#475569;font-size:12.5px;margin-top:4px;line-height:1.7">'+esc((p.abstract||'').slice(0,260))+'…</div>';
+      html+='</div>';
+    });
+    html+='</div>';
+  }
+  html+='</div>';
+  // Sec 4 可研究问题示例
+  var qs=[];
+  topProfiles.forEach(function(r){(r.p.questions||[]).forEach(function(q_){qs.push(q_);});});
+  qs=qs.slice(0,5);
+  if(qs.length){
+    html+='<div>';
+    html+='<div style="font-weight:600;font-size:15.5px;color:#be185d;margin-bottom:10px">💡 四、可研究问题示例（5条）</div>';
+    html+='<ol style="margin:0 0 0 22px;padding:0;color:#1e293b;font-size:14px;line-height:2">';
+    qs.forEach(function(q_){html+='<li>'+esc(q_)+'</li>';});
+    html+='</ol></div>';
+  }
+  // 底部Footer
+  html+='<div style="margin-top:20px;padding-top:14px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--muted);line-height:1.8">';
+  html+='⚠️ 以上建议由智能体基于数据主题关键词与内置方法模板自动生成，仅供选题阶段参考。正式研究前请：<br>① 在【🤖 文献研究智能体】Tab进一步检索相关领域文献；② 确认数据可用性、样本量与模型假设；③ 内生性问题（遗漏变量/反向因果/测量误差）需结合工具变量、准自然实验等策略严谨处理。';
+  html+='</div>';
+  // 弹层
+  var wrap=document.createElement('div');
+  wrap.innerHTML = hSuggestionDialogHTML(html);
+  document.body.appendChild(wrap.firstElementChild);
 }
 
 /* ---------- 链接录入 ---------- */
