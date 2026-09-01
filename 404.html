@@ -4646,7 +4646,7 @@ else:
   <div id="h-tab-search">
     <!-- 下载说明（已简化为单百度网盘） -->
     <div style="margin-bottom:10px;background:linear-gradient(135deg,#f0fdf4,#ecfeff);border:1px solid #86efac;border-radius:10px;padding:10px 16px;font-size:13.5px;color:#065f46;line-height:1.7">
-      📦 全部 4 类年鉴数据已整理为 4 个百度网盘分享，每类一个整包（含 Excel + PDF）。<b>检索到匹配表格后，下载按钮会自动跳转到对应分类的网盘链接</b>，提取码 <span style="font-family:monospace;background:#fff;padding:1px 6px;border-radius:3px;border:1px solid #86efac">ment</span>。
+      📦 全部 4 类年鉴数据已整理为 4 个百度网盘分享，每类一个整包（含 Excel + PDF）。<b>检索到匹配表格后，下载按钮会自动跳转到对应分类的网盘链接</b>。
     </div>
     <div class="toolbar" style="flex-wrap:wrap">
       <input class="input wide" id="h-q" placeholder="输入关键词，例如：床位数、执业医师、诊疗人次、卫生总费用、妇幼保健、中医医院…（支持中英文，空格分隔多关键词 AND）" onkeydown="if(event.key==='Enter')hDoSearch()">
@@ -4676,106 +4676,30 @@ else:
 
   <!-- ========== 子TAB 2: 链接录入 ========== -->
   <div id="h-tab-admin" style="display:none">
-    <div class="about-card" style="margin-bottom:16px">
-      <h3>🔐 管理员验证</h3>
-      <p>为防止访客误操作，链接录入面板需输入管理密码（默认：<span class="kbd">haiyan-health-2026</span>，可在 JS <span class="kbd">H_ADMIN_PASS</span> 处修改）。</p>
-      <div class="toolbar" style="margin-top:10px">
-        <input type="password" class="input" id="h-pw" placeholder="管理密码" style="max-width:360px" onkeydown="if(event.key==='Enter')hUnlockAdmin()">
-        <button class="btn primary" onclick="hUnlockAdmin()">解锁录入</button>
-        <button class="btn sm" onclick="hImportLinksDialog()">📥 从已导出 JSON 导入链接</button>
+    <!-- 密码门 -->
+    <div id="h-admin-gate" class="about-card" style="margin-bottom:0">
+      <h3>🔐 管理员入口</h3>
+      <p style="color:var(--muted);margin:4px 0 12px">输入管理密码后，可以更新四类年鉴数据的百度网盘分享链接，修改会立即反映到【🔍 智能检索】Tab 的卡片上。</p>
+      <div class="toolbar" style="margin-top:6px">
+        <input type="password" class="input" id="h-pw" placeholder="管理密码" style="max-width:320px" onkeydown="if(event.key==='Enter')hAdminGate()">
+        <button class="btn primary" onclick="hAdminGate()">解锁</button>
       </div>
     </div>
 
-    <div id="h-admin-body" style="display:none">
-
-      <!-- ===== 全局总链接（最简单配置：只需填这1个） ===== -->
-      <div class="about-card" style="margin-bottom:16px;border-left:5px solid #f59e0b;background:linear-gradient(135deg,#fffbeb,#ffffff)">
-        <h3 style="margin-top:0">🌐 全局百度网盘总链接 <span style="font-weight:400;color:#b45309;font-size:14px">（最简单配置：您把全部数据打包上传，只需填这 1 个链接即可！）</span></h3>
-        <p style="color:#78350f;margin:4px 0 12px">适用场景：您已将整个「卫生健康」4 大类 24 个年份组的数据全部打包为一个压缩包或文件夹，并分享了一个总链接。开启后，所有未单独配置链接的年份组、表格、PDF 都会自动跳转使用这个总链接，并在卡片上提示【在网盘内如何定位到对应的分类/年份/章节】。</p>
-        <div style="display:grid;grid-template-columns:minmax(320px,1fr) auto;gap:10px;align-items:end">
-          <label style="font-size:13px;color:#78350f">🔗 全局分享链接（整个卫生健康数据打包）<input id="h-global-url" class="input" placeholder="https://pan.baidu.com/s/xxxxxx" style="margin-top:4px"></label>
-          <label style="font-size:13px;color:#78350f">🔑 提取码（如有）<input id="h-global-pwd" class="input" placeholder="如：abcd，可留空" style="margin-top:4px;max-width:140px"></label>
-        </div>
-        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#334155"><input type="checkbox" id="h-global-enable" onchange="hGlobalToggle(this)" checked> ✅ 启用全局总链接作为所有缺省年份组/PDF/表格的下载链接</label>
-          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#334155"><input type="checkbox" id="h-global-force"> 🔒 强优先（即使填了年份组链接，也统一用全局总链接+定位提示，适合只有一个总包的用户）</label>
-        </div>
-        <div style="margin-top:10px;font-size:12.5px;color:#92400e;background:#fef9c3;padding:8px 12px;border-radius:6px;line-height:1.7">
-          💡 <b>推荐操作</b>：① 将百度网盘里打包好的总分享链接粘贴到上方 → ② 勾选"启用" → ③ 点【🧪 应用到当前会话】 → ④ 回到【🔍 智能检索】搜关键词即可，下载按钮会自动跳转。
-        </div>
+    <!-- 解锁后：4 卡片链接编辑 -->
+    <div id="h-admin-body" style="display:none;margin-top:0">
+      <div class="toolbar" style="margin-bottom:14px;justify-content:space-between">
+        <div style="font-size:13px;color:var(--muted)">🔑 已解锁 · 修改下方链接后点击保存（自动同步到首页卡片和检索结果）</div>
+        <button class="btn sm" onclick="hAdminGate('lock')">🔓 锁定</button>
       </div>
-
-      <!-- ===== GitHub 加密直下配置 ===== -->
-      <div class="about-card" style="margin-bottom:16px;border-left:5px solid #0ea5e9;background:linear-gradient(135deg,#eff6ff,#ffffff)">
-        <h3 style="margin-top:0">🔒 GitHub 加密直下 <span style="font-weight:400;color:#0369a1;font-size:14px">（摆脱百度网盘限速/提取码！AES-256-GCM 客户端解密）</span></h3>
-        <p style="color:#1e40af;margin:4px 0 12px">Excel（7518 张）+ 小 PDF（<80MB 目录/可复制版）已加密托管在 GitHub，通过 jsDelivr 全球 CDN 极速下载。只有输入正确的<b>解密密码</b>才能还原原文件。<br><b>大扫描版 PDF（≥80MB）</b>：继续走上方【百度网盘】兜底。</p>
-        <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;align-items:end;margin-bottom:10px">
-          <label style="font-size:13px;color:#0c4a6e">📜 manifest.json URL（加密数据清单，上传后由 step3 脚本输出）<input id="h-gh-manifest" class="input" value="https://cdn.jsdelivr.net/gh/Haiyan-Codes/research-data-hub-data@main/manifest.json" placeholder="https://cdn.jsdelivr.net/gh/Haiyan-Codes/research-data-hub-data@main/manifest.json"></label>
-          <label style="font-size:13px;color:#0c4a6e">🌐 CDN 选择<select id="h-gh-cdn" class="input" onchange="hGhRecompute()">
-            <option value="jsdelivr">jsDelivr CDN（推荐，最快）</option>
-            <option value="raw">GitHub Raw（备用）</option>
-            <option value="custom">自定义前缀</option>
-          </select></label>
-        </div>
-        <div id="h-gh-custom-wrap" style="display:none;margin-bottom:10px">
-          <label style="font-size:13px;color:#0c4a6e">🔧 自定义 CDN 前缀（末尾不加 /）<input id="h-gh-prefix" class="input" placeholder="https://cdn.example.com/data"></label>
-        </div>
-        <div style="display:grid;grid-template-columns:1.5fr 1fr auto;gap:10px;align-items:end;margin-bottom:10px">
-          <label style="font-size:13px;color:#0c4a6e">🔑 解密密码（由加密脚本 step2 设置；默认 Haiyan-HealthHub-2026!，不会上传到服务器，仅存本浏览器 session）<input type="password" id="h-gh-pwd" class="input" placeholder="解密密码，输入完成后点【加载清单并测试】"></label>
-          <label style="font-size:13px;color:#0c4a6e">
-            💾 记住密码
-            <select id="h-gh-remember" class="input">
-              <option value="session">仅本次会话（sessionStorage）</option>
-              <option value="local">直到手动清除（localStorage）</option>
-            </select>
-          </label>
-          <button class="btn primary" onclick="hGhLoadManifest()">📥 加载清单并测试</button>
-        </div>
-        <div id="h-gh-status" style="font-size:13px;color:var(--muted)">尚未加载清单。</div>
-      </div>
-
-      <div class="about-card" style="margin-bottom:16px">
-        <h3>📘 使用说明</h3>
-        <ol style="padding-left:20px;line-height:1.9">
-          <li><b>推荐方式（最快）</b>：去百度网盘，对每个 <i>「年份-分类组」</i>（如"卫生健康统计年鉴 2023"整个文件夹）点击【分享】生成链接，粘贴到【整包链接】一列即可。</li>
-          <li>如果链接区分了 Excel 文件夹 和 PDF 文件夹，分别粘贴到对应列。系统会优先使用细粒度链接。</li>
-          <li>需要单张表单独分享时，展开对应的"年份组 → 单表级链接"区域粘贴。</li>
-          <li>填完所有需要的链接后：<br>
-            &nbsp;&nbsp;• 先点 <b>💾 保存到本地浏览器（localStorage）</b>，防止丢失；<br>
-            &nbsp;&nbsp;• 再点 <b>📤 导出带链接的 health_index_with_links.json</b>，把下载的文件替换 <span class="kbd">research_hub/health_data_index.json</span>，然后重新部署到 GitHub Pages，链接就永久生效了。<br>
-            &nbsp;&nbsp;• 或者直接把导出的 JSON 发给我，我帮您集成并部署。</li>
-          <li>当前已填链接 <b>立即</b> 对"🔍 智能检索"Tab 生效（点【应用到当前会话】即可）。</li>
-        </ol>
-      </div>
-
-      <div class="toolbar" style="margin-bottom:14px;flex-wrap:wrap">
-        <select id="h-admin-cat" onchange="hRenderAdminList()"><option value="">全部 4 个分类</option></select>
-        <select id="h-admin-year" onchange="hRenderAdminList()"><option value="">全部年份</option></select>
-        <button class="btn sm" onclick="hApplySession()">🧪 应用到当前会话（测试检索）</button>
-        <button class="btn sm teal" onclick="hSaveLS()">💾 保存到本地浏览器</button>
-        <button class="btn sm" onclick="hLoadLS()">↩️ 从本地浏览器恢复</button>
-        <button class="btn primary" onclick="hExportIndex()">📤 导出带链接的 JSON</button>
-        <input type="file" id="h-import-file" accept="application/json,.json" style="display:none" onchange="hImportLinksFile(this)">
-        <span style="color:var(--muted);font-size:12.5px">💡 24 个年份组 / 7518 张 Excel 表</span>
-      </div>
-      <div id="h-admin-list"></div>
-    </div>
-  </div>
-
-  <!-- 导入弹窗 -->
-  <div id="h-import-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
-    <div style="background:#fff;padding:24px;max-width:620px;width:92%;border-radius:14px">
-      <h3 style="margin:0 0 12px">📥 从 JSON 导入链接</h3>
-      <p style="color:var(--muted);margin:0 0 14px">选择您之前导出的 <span class="kbd">health_index_with_links.json</span>（或已填好链接的同结构 JSON 文件），系统会把链接合并填入当前表单。</p>
-      <textarea id="h-import-text" rows="8" placeholder='或在此粘贴 JSON 文本…' style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:12px"></textarea>
-      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
-        <button class="btn sm" onclick="document.getElementById('h-import-modal').style.display='none'">取消</button>
-        <label for="h-import-file" class="btn sm" style="cursor:pointer">浏览文件…</label>
-        <button class="btn primary sm" onclick="hImportLinksText()">📥 从文本导入</button>
+      <div id="h-admin-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px"></div>
+      <div class="toolbar" style="margin-top:16px;flex-wrap:wrap">
+        <button class="btn primary" onclick="hAdminSave()">💾 保存修改</button>
+        <button class="btn sm" onclick="hAdminReset()">↩️ 恢复当前值</button>
+        <span style="color:var(--muted);font-size:12.5px;margin-left:8px">修改保存在浏览器 localStorage，需要部署时手动集成到 index.html 顶部的 H_CAT_PANS 常量（或告诉我改了什么我帮您部署）。</span>
       </div>
     </div>
   </div>
-</section>
 
 <!-- ============ PAGE 5: ABOUT ============ -->
 <section id="p-about" class="page">
@@ -8206,6 +8130,7 @@ function initHealthHub(){
       });
       // 载入已保存链接 & 全局总链接（优先级：localStorage > meta.global_link 嵌入）
       try{var s=localStorage.getItem('HEALTH_LINKS');if(s){H_LINKS=JSON.parse(s)||{};}}catch(e){}
+      try{var sp=localStorage.getItem('H_CAT_PANS');if(sp){var o=JSON.parse(sp);for(var k in o){if(k&&o[k]&&typeof o[k]==='object'&&o[k].url)H_CAT_PANS[k]=o[k];}}}catch(e){}
       var loadedGlobalFromJSON=false;
       if(idx.meta && idx.meta.global_link && typeof idx.meta.global_link==='object' && idx.meta.global_link.url){
         H_GLOBAL=Object.assign({url:'',pwd:'',enable:true,force:false}, idx.meta.global_link);
@@ -8236,6 +8161,86 @@ function initHealthHub(){
       metad.innerHTML='<span style="color:var(--err)">❌ 载入 health_data_index.json 失败：'+esc(err.message)+'<br>请确认该文件与 index.html 同目录。</span>';
     });
 }
+
+/* ========== 简化版 admin：密码门 + 4卡片链接编辑 ========== */
+function hAdminGate(action){
+  if(action==='lock'){
+    document.getElementById('h-admin-gate').style.display='block';
+    document.getElementById('h-admin-body').style.display='none';
+    document.getElementById('h-pw').value='';
+    return;
+  }
+  var pw=(document.getElementById('h-pw').value||'').trim();
+  if(pw!==H_ADMIN_PASS){alert('密码错误');return;}
+  document.getElementById('h-admin-gate').style.display='none';
+  document.getElementById('h-admin-body').style.display='block';
+  hRenderAdminCards();
+}
+function hRenderAdminCards(){
+  var wrap=document.getElementById('h-admin-cards');
+  if(!wrap) return;
+  var cats=(HEALTH_INDEX&&HEALTH_INDEX.categories)||[];
+  var html='';
+  cats.forEach(function(c){
+    var k=c.key;
+    var pan=H_CAT_PANS[k]||{url:'',pwd:'',color:'#64748b'};
+    var desc=H_CAT_DESC[k]||{cn:c.cn,yr:'',e:0,p:0,desc:'',topics:[]};
+    html+='<div style="border:1px solid var(--border);border-radius:12px;background:#fff;padding:16px">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px">';
+    html+='<div><div style="font-weight:700;font-size:14.5px;color:var(--ink)">'+esc(k)+'</div>';
+    html+='<div style="font-size:12px;color:'+pan.color+';margin-top:1px">'+esc(desc.cn)+' · '+esc(desc.yr)+'</div></div>';
+    html+='<span class="chip" style="font-size:11px;background:'+pan.color+'12;color:'+pan.color+'">📊 '+(desc.e||0)+' 张</span>';
+    html+='</div>';
+    html+='<div style="font-size:12.5px;color:#475569;line-height:1.6;margin-bottom:10px">'+esc(desc.desc)+'</div>';
+    html+='<label style="font-size:12px;color:var(--muted)">百度网盘分享链接<input class="input" id="h-admin-url-'+k+'" value="'+esc(pan.url)+'" placeholder="https://pan.baidu.com/s/xxxxx" style="margin-top:4px"></label>';
+    html+='</div>';
+  });
+  wrap.innerHTML=html;
+}
+function hAdminSave(){
+  var cats=(HEALTH_INDEX&&HEALTH_INDEX.categories)||[];
+  var count=0;
+  cats.forEach(function(c){
+    var k=c.key;
+    var el=document.getElementById('h-admin-url-'+k);
+    if(!el) return;
+    var v=(el.value||'').trim();
+    if(v){
+      H_CAT_PANS[k]=H_CAT_PANS[k]||{pwd:'ment',color:'#64748b'};
+      H_CAT_PANS[k].url=v;
+      count++;
+    }
+  });
+  try{localStorage.setItem('H_CAT_PANS',JSON.stringify(H_CAT_PANS));}catch(e){}
+  alert('✅ 已保存 '+count+' 个分类的链接。\n\n刷新页面即可生效，如需永久生效需把新链接集成到 index.html 的 H_CAT_PANS 常量并重新部署。');
+  hDoSearch();
+}
+function hAdminReset(){
+  hRenderAdminCards();
+}
+/* ========== 简化版 admin 结束 ========== */
+
+/* 兼容保留的旧 admin 函数（不再被 HTML 调用，但需存在以避免 undefined） */
+function hUnlockAdmin(){ hAdminGate(); }
+function hRenderAdminList(){}
+function hApplySession(){ hAdminSave(); }
+function hSaveLS(){ hAdminSave(); }
+function hLoadLS(){ hRenderAdminCards(); }
+function hExportIndex(){
+  var cats=Object.keys(H_CAT_PANS);
+  alert('📤 当前 H_CAT_PANS 配置：\n\n'+JSON.stringify(H_CAT_PANS,null,2)+'\n\n如需永久生效，请把以上 JSON 替换 index.html 顶部 var H_CAT_PANS={...} 块的内容。');
+}
+function hImportLinksDialog(){ hRenderAdminCards(); }
+function hImportLinksFile(){}
+function hImportLinksText(){}
+function hGlobalToggle(){}
+function hGlobalRead(){}
+function hGlobalWrite(){}
+function hGhLoadManifest(){}
+function hGhRecompute(){}
+function hGhSavePwd(){}
+function hGhStatus(){}
+/* ========== 兼容函数结束 ========== */
 
 function hSwitchTab(t){
   document.querySelectorAll('.h-tab-btn').forEach(function(b){b.classList.remove('active','teal');});
@@ -8374,7 +8379,6 @@ function hDoSearch(){
       // 下载按钮（固定指向分类级百度网盘链接）
       html+='<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">';
       html+='<a class="btn primary sm" href="'+esc(pan.url)+'" target="_blank" rel="noopener" style="background:'+pan.color+';border-color:'+pan.color+'">🟢 百度网盘下载 →</a>';
-      html+='<span style="font-size:11.5px;color:var(--muted)">提取码：<span style="font-family:monospace;background:#f1f5f9;padding:0 5px;border-radius:2px">'+esc(pan.pwd)+'</span></span>';
       html+='</div></div>';
 
       // PDF 列表
@@ -8483,8 +8487,7 @@ function hEmptyWelcomeHTML(){
     (d.topics||[]).forEach(function(t){html+='<span class="chip grey" style="font-size:11.5px;padding:2px 8px">'+esc(t)+'</span>';});
     html+='</div>';
     html+='</div>';
-    html+='<div style="padding:12px 18px;border-top:1px solid var(--border);background:#fafafa;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">';
-    html+='<span style="font-size:12px;color:var(--muted)">提取码：<span style="font-family:monospace;background:#fff;padding:1px 6px;border-radius:3px;border:1px solid var(--border);color:var(--ink)">'+esc(pan.pwd)+'</span></span>';
+    html+='<div style="padding:12px 18px;border-top:1px solid var(--border);background:#fafafa;display:flex;justify-content:flex-end">';
     html+='<a class="btn primary sm" href="'+esc(pan.url)+'" target="_blank" rel="noopener" style="background:'+pan.color+';border-color:'+pan.color+'">🟢 百度网盘下载 →</a>';
     html+='</div></div>';
   });
