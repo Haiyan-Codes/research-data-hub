@@ -4277,9 +4277,9 @@ section.page.active{display:block}
   <div class="brand"><div class="brand-mark">RH</div><span>Research&nbsp;Data&nbsp;Hub <span style="color:var(--muted);font-weight:400;font-size:12.5px;margin-left:4px">科研数据平台</span></span></div>
   <div class="nav-tabs" id="nav-tabs">
     <button data-p="home" class="active">🏠 首页</button>
-    <button data-p="search" class="">🔍 文献/数据集检索</button>
+    <button data-p="search" class="">文献/数据集检索</button>
     <button data-p="agent" class="">🤖 文献研究智能体</button>
-    <button data-p="health">🏥 卫生健康数据智能库</button>
+    <button data-p="health">卫生健康数据智能库</button>
     <button data-p="library">⭐ 我的收藏</button>
     <button data-p="about">ℹ️ 关于</button>
   </div>
@@ -4298,7 +4298,7 @@ section.page.active{display:block}
       <span>🕒 最近检索：<b id="home-lastupdate">暂无</b></span>
     </div>
     <div class="actions">
-      <button class="btn primary" onclick="go('search')">🔍 立即检索文献</button>
+      <button class="btn primary" onclick="go('search')">立即检索文献</button>
       <button class="btn teal" onclick="go('agent')">🤖 文献研究智能体</button>
       <button class="btn" onclick="go('search')">📁 公开数据集检索</button>
     </div>
@@ -4333,7 +4333,7 @@ section.page.active{display:block}
 
 <!-- ============ PAGE 2: SEARCH ============ -->
 <section id="p-search" class="page">
-  <div class="page-title"><h2>🔍 文献 / 数据集 检索</h2><div class="meta">PubMed · Crossref · Semantic Scholar · Zenodo</div></div>
+  <div class="page-title"><h2>文献 / 数据集 检索</h2><div class="meta">PubMed · Crossref · Semantic Scholar · Zenodo</div></div>
 
   <div class="toolbar">
     <input class="input wide" id="q" placeholder="输入关键词，例如：depression cognitive decline cohort study / mental health survey / 心理健康 纵向研究">
@@ -4351,7 +4351,7 @@ section.page.active{display:block}
     <span class="chip grey" id="s-zenodo">Zenodo (数据集)</span>
     <span id="s-result-count" style="margin-left:auto;color:var(--ink2);font-size:13px"></span>
     <button class="btn sm" onclick="saveAllResults()" id="btn-saveall" disabled="">⭐ 收藏本页结果</button>
-    <button class="btn sm" onclick="exportSavedToCsv()" id="btn-export" disabled="">📤 导出收藏 CSV</button>
+    <button class="btn sm" onclick="exportSavedToCsv()" id="btn-export" disabled="">导出收藏 CSV</button>
   </div>
 
   <div id="search-status" class="empty-tip">
@@ -4363,7 +4363,7 @@ section.page.active{display:block}
 
 <!-- ============ PAGE 3: ANALYZE ============ -->
 <section id="p-analyze" class="page">
-  <div class="page-title"><h2>📊 分析台</h2><div class="meta">Python / R 浏览器端执行 · 脚本编辑 · 数据查看 · 绘图</div></div>
+  <div class="page-title"><h2>分析台</h2><div class="meta">Python / R 浏览器端执行 · 脚本编辑 · 数据查看 · 绘图</div></div>
 
   <div class="rstudio">
     <!-- LEFT: File / Data panel -->
@@ -4378,7 +4378,7 @@ section.page.active{display:block}
       <div class="rs-body" id="rs-files-body">
         <div class="rs-empty">未加载任何数据文件<br><br>
           <button class="rs-btn primary" onclick="document.getElementById('f2').click()">📂 上传数据文件</button>
-          <button class="rs-btn" style="margin-top:6px" onclick="loadSampleData()">📊 加载示例数据</button><br><br>
+          <button class="rs-btn" style="margin-top:6px" onclick="loadSampleData()">加载示例数据</button><br><br>
           <span style="font-size:11px">支持 CSV / TSV / RDS / XLSX</span>
         </div>
       </div>
@@ -4402,7 +4402,7 @@ section.page.active{display:block}
           <button class="rs-btn sm" onclick="rsSetEngine('py')">🐍 Py</button>
           <button class="rs-btn sm" onclick="rsSetEngine('r')">📈 R</button>
           <button class="rs-btn sm" onclick="rsLoadSnippet('linear')">📉 回归</button>
-          <button class="rs-btn sm" onclick="rsLoadSnippet('viz')">📊 作图</button>
+          <button class="rs-btn sm" onclick="rsLoadSnippet('viz')">作图</button>
           <button class="rs-btn sm" onclick="rsLoadSnippet('stats')">📋 统计</button>
         </div>
         <textarea class="rs-code" id="rs-code" spellcheck="false" placeholder="# 在这里写代码，数据加载后可用变量：
@@ -4410,7 +4410,7 @@ section.page.active{display:block}
 # R:      .df (data.frame)
 # 快捷：Ctrl+Enter 运行全部，选中后点「运行选中」"># 默认 Python 代码：点击上方 📉回归/📊作图/📋统计 可加载更多片段
 if 'DF' not in globals() or DF is None:
-    print('⚠ DF 不存在，请先在左侧上传 CSV 或点击「📊 加载示例数据」')
+    print('⚠ DF 不存在，请先在左侧上传 CSV 或点击「加载示例数据」')
 else:
     print('数据维度:', DF.shape)
     print('列名:', list(DF.columns))
@@ -4476,7 +4476,7 @@ else:
   <div id="agent-report" style="display:none">
     <!-- Agent Sub-tabs -->
     <div class="agent-tabs" id="agent-tabs">
-      <button class="agent-tab active" onclick="agentSwitchTab(this,'overview')">📊 研究概览</button>
+      <button class="agent-tab active" onclick="agentSwitchTab(this,'overview')">研究概览</button>
       <button class="agent-tab" onclick="agentSwitchTab(this,'papers')">📋 文献汇总 <span id="a-tab-count-papers" class="badge" style="display:none"></span></button>
       <button class="agent-tab" onclick="agentSwitchTab(this,'datasets')">📁 相关数据集</button>
       <button class="agent-tab" onclick="agentSwitchTab(this,'insights')">🧠 研究洞察</button>
@@ -4487,7 +4487,7 @@ else:
     <!-- Tab 1: 研究概览 -->
     <div class="agent-tab-panel active" id="a-tab-overview">
       <div class="grid-2" style="gap:14px">
-        <div class="agent-card"><h3>📊 文献年份分布</h3><div id="agent-year-chart" class="bar-chart"></div></div>
+        <div class="agent-card"><h3>文献年份分布</h3><div id="agent-year-chart" class="bar-chart"></div></div>
         <div class="agent-card"><h3>👥 Top 高产作者</h3><div id="agent-author-chart" class="bar-chart"></div></div>
         <div class="agent-card"><h3>📚 Top 核心期刊</h3><div id="agent-journal-chart" class="bar-chart"></div></div>
         <div class="agent-card"><h3>🔗 高频关键词</h3><div id="agent-keyword-chart" class="bar-chart"></div></div>
@@ -4521,7 +4521,7 @@ else:
       <div class="insight-box">
         <h3>💬 基于事实的文献问答</h3>
         <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">
-          ✅ 回答 <b>100% 基于当前批次的文献内容</b>（标题+摘要+结构化四要素），不产生任何幻觉。每条答案附上对应的文献编号与原文证据。
+          回答 <b>100% 基于当前批次的文献内容</b>（标题+摘要+结构化四要素），不产生任何幻觉。每条答案附上对应的文献编号与原文证据。
           <br>🔧 （可选）在下方填入你的 OpenAI 兼容接口 Key（例如 OpenRouter / 本地通义 / DeepSeek 等），可以在检索证据之上追加 LLM 润色整合的自然语言回答。
         </div>
         <div id="qa-history"></div>
@@ -4556,7 +4556,7 @@ else:
           <button class="btn sm" onclick="saveAgentReport()">⭐ 收藏报告</button>
         </div>
         <div id="agent-md-html" style="background:#fff;padding:20px 28px;border:1px solid var(--line);border-radius:4px;max-height:600px;overflow:auto;font-size:14px;line-height:1.8;color:var(--ink2)"></div>
-        <details style="margin-top:10px"><summary style="cursor:pointer;font-size:12.5px;color:var(--accent)">📄 查看原始 Markdown</summary><pre id="agent-md" style="background:#f7f7f7;padding:12px;border-radius:3px;white-space:pre-wrap;max-height:400px;overflow:auto;font-size:12px;line-height:1.5;margin-top:8px"></pre></details>
+        <details style="margin-top:10px"><summary style="cursor:pointer;font-size:12.5px;color:var(--accent)">查看原始 Markdown</summary><pre id="agent-md" style="background:#f7f7f7;padding:12px;border-radius:3px;white-space:pre-wrap;max-height:400px;overflow:auto;font-size:12px;line-height:1.5;margin-top:8px"></pre></details>
       </div>
     </div>
   </div>
@@ -4635,28 +4635,28 @@ else:
 
 <!-- ============ PAGE HEALTH: 卫生健康数据智能库 ============ -->
 <section id="p-health" class="page">
-  <div class="page-title"><h2>🏥 卫生健康数据智能库</h2><div class="meta" id="h-meta">载入索引中…</div></div>
+  <div class="page-title"><h2>卫生健康数据智能库</h2><div class="meta">4 大类年鉴 · 百度网盘整包下载</div></div>
 
   <div id="h-tabs" style="display:flex;gap:6px;margin-bottom:16px">
-    <button class="btn sm teal h-tab-btn active" onclick="hSwitchTab('search')">📦 四类年鉴数据</button>
-    <button class="btn sm h-tab-btn" onclick="hSwitchTab('admin')">🔑 链接管理</button>
+    <button class="btn sm teal h-tab-btn active" onclick="hSwitchTab('search')">四类年鉴数据</button>
+    <button class="btn sm h-tab-btn" onclick="hSwitchTab('admin')">链接管理</button>
   </div>
 
-  <!-- ========== 子TAB 1: 智能检索 ========== -->
+  <!-- ========== 子TAB 1: 四类年鉴数据 ========== -->
   <div id="h-tab-search">
     <div style="margin-bottom:14px;background:linear-gradient(135deg,#f0fdf4,#ecfeff);border:1px solid #86efac;border-radius:10px;padding:10px 16px;font-size:13.5px;color:#065f46;line-height:1.7">
-      📦 每类数据整理为一个百度网盘整包（含 Excel 表格 + PDF 说明文档），点击下方卡片直接下载。
+      每类数据整理为一个百度网盘整包（含 Excel 表格 + PDF 说明文档），点击下方卡片直接下载。
     </div>
     <div id="h-cards-grid"></div>
   </div>
 
-
-  <!-- ========== 子TAB 2: 链接录入 ========== -->
+  <!-- ========== 子TAB 2: 链接管理 ========== -->
   <div id="h-tab-admin" style="display:none">
     <!-- 密码门 -->
     <div id="h-admin-gate" class="about-card" style="margin-bottom:0">
-      <h3>🔐 管理员入口</h3>
-      <p style="color:var(--muted);margin:4px 0 12px">输入管理密码后，可以更新四类年鉴数据的百度网盘分享链接，修改会立即反映到【🔍 智能检索】Tab 的卡片上。</p>
+      <h3>管理员入口</h3>
+      <p style="color:var(--muted);margin:4px 0 6px">输入管理密码后，可以更新四类年鉴数据的百度网盘分享链接，修改会立即反映到【四类年鉴数据】Tab 的卡片上。</p>
+      <p style="color:#94a3b8;margin:0 0 10px;font-size:12px">默认密码：haiyan-health-2026（如需修改请联系站长）</p>
       <div class="toolbar" style="margin-top:6px">
         <input type="password" class="input" id="h-pw" placeholder="管理密码" style="max-width:320px" onkeydown="if(event.key==='Enter')hAdminGate()">
         <button class="btn primary" onclick="hAdminGate()">解锁</button>
@@ -4666,7 +4666,7 @@ else:
     <!-- 解锁后：4 卡片链接编辑 -->
     <div id="h-admin-body" style="display:none;margin-top:0">
       <div class="toolbar" style="margin-bottom:14px;justify-content:space-between">
-        <div style="font-size:13px;color:var(--muted)">🔑 已解锁 · 修改下方链接后点击保存（自动同步到首页卡片和检索结果）</div>
+        <div style="font-size:13px;color:var(--muted)">已解锁 · 修改下方链接后点击保存（自动同步到首页卡片和检索结果）</div>
         <button class="btn sm" onclick="hAdminGate('lock')">🔓 锁定</button>
       </div>
       <div id="h-admin-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px"></div>
@@ -4986,7 +4986,7 @@ function renderResults(){
     var idx=start+i;
     var isDataset=r.kind==='dataset';
     var srcClass=r.source==='PubMed'?'ok':(r.source==='Zenodo'?'warn':(r.source==='S2'?'accent2':'grey'));
-    var typeBadge=isDataset?'<span class="chip warn">📁 数据集</span>':'<span class="chip ok">📄 文献</span>';
+    var typeBadge=isDataset?'<span class="chip warn">📁 数据集</span>':'<span class="chip ok">文献</span>';
     var badges=[typeBadge,'<span class="chip '+srcClass+'">'+r.source+'</span>', r.year?r.year+'年':''].filter(Boolean).join(' ');
     var cites=r.citations?('<span class="chip">引用 '+r.citations+'</span>'):'';
     var datasetMeta=isDataset
@@ -5008,7 +5008,7 @@ function renderResults(){
       +datasetMeta
       +'<div class="ractions">'
       +'<button class="btn sm" data-title="'+(r.title||'').replace(/"/g,'&quot;')+'" data-type="'+(isDataset?'dataset':'paper')+'" data-source="'+(r.source||'')+'" data-year="'+(r.year||'')+'" data-url="'+(r.url||'')+'" data-doi="'+(r.doi||'')+'" onclick="libAddPaper(this)">⭐ 收藏</button>'
-      +'<button class="btn sm" onclick="loadSearchResultsToAnalyze()">📊 全部结果载入分析台</button>'
+      +'<button class="btn sm" onclick="loadSearchResultsToAnalyze()">全部结果载入分析台</button>'
       +(r.url?('<a class="btn sm" href="'+r.url+'" target="_blank">↗ 原始页面</a>'):'')
       +'</div>'
       +'</div>';
@@ -5028,7 +5028,7 @@ function renderResults(){
 function libAddPaper(btn){
   var d=btn.dataset;
   libAdd({type:d.type||'paper',title:d.title,source:d.source,year:d.year,url:d.url,doi:d.doi});
-  btn.textContent='✅ 已收藏';btn.disabled=true;
+  btn.textContent='已收藏';btn.disabled=true;
   document.getElementById('btn-export').disabled=false;
 }
 function saveAllResults(){
@@ -5077,7 +5077,7 @@ function loadSearchResultsToAnalyze(){
   RS_FILES.push({name:'search_results.csv',rows:rows.length,vars:vars.length,time:Date.now()});
   go('analyze');
   setTimeout(function(){
-    rsLog('📊 已载入 '+rows.length+' 条检索结果到分析台','ok');
+    rsLog('已载入 '+rows.length+' 条检索结果到分析台','ok');
     if(typeof rsRenderFileList==='function') rsRenderFileList();
     // 同步到当前引擎
     if(typeof syncDataToEngine==='function'){
@@ -5181,7 +5181,7 @@ function doneRead(fname, nrow, vars){
   });
   var di=document.getElementById('data-info');
   if(di) di.innerHTML =
-    '<span style="color:var(--ok)">✅ '+fname+'</span><br>'+
+    '<span style="color:var(--ok)">'+fname+'</span><br>'+
     '<span class="data-head">行数：'+nrow+' · 列数：'+vars.length+'</span><br>'+
     '<span style="font-size:12px;color:var(--muted)">变量：'+vars.slice(0,10).join(', ')+(vars.length>10?(' 等'+vars.length+' 列'):'')+'</span>';
 }
@@ -5209,7 +5209,7 @@ function rsSetEngine(e){
   // sync data to new engine
   if(DATA && DATA_VARS.length){
     rsLog('正在同步数据到 '+(e==='py'?'DF':' .df')+' ...');
-    syncDataToEngine().then(function(){ rsRefreshEnv(); rsLog('✅ 数据已就绪','ok'); })
+    syncDataToEngine().then(function(){ rsRefreshEnv(); rsLog('数据已就绪','ok'); })
       .catch(function(err){ rsLogErr('数据同步失败: '+err.message); });
   } else {
     rsRefreshEnv();
@@ -5252,7 +5252,7 @@ function rsSwitchTab(tab,type){
 var Snippets={
   py_stats:`# 描述性统计
 if 'DF' not in globals() or DF is None:
-    print('⚠ DF 不存在，请先在左侧「📁 文件 / 数据」上传 CSV 或点击「📊 加载示例数据」')
+    print('⚠ DF 不存在，请先在左侧「📁 文件 / 数据」上传 CSV 或点击「加载示例数据」')
 else:
     print('=== 描述性统计 ===')
     print(DF.describe(include='all'))
@@ -5268,7 +5268,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 if 'DF' not in globals() or DF is None:
-    print('⚠ DF 不存在，请先在左侧上传 CSV 或点击「📊 加载示例数据」')
+    print('⚠ DF 不存在，请先在左侧上传 CSV 或点击「加载示例数据」')
 else:
     num_cols = DF.select_dtypes(include='number').columns[:6]
     if len(num_cols) == 0:
@@ -5277,13 +5277,13 @@ else:
         DF[num_cols].hist(figsize=(12, 8), bins=20, color='steelblue', edgecolor='white')
         plt.tight_layout()
         plt.savefig('/tmp/plot.png')
-        print('✅ 已绘制', len(num_cols), '个数值变量的直方图')`,
+        print('已绘制', len(num_cols), '个数值变量的直方图')`,
   py_linear:`# 线性回归
 from scipy import stats
 import numpy as np
 
 if 'DF' not in globals() or DF is None:
-    print('⚠ DF 不存在，请先在左侧上传 CSV 或点击「📊 加载示例数据」')
+    print('⚠ DF 不存在，请先在左侧上传 CSV 或点击「加载示例数据」')
 else:
     numeric = DF.select_dtypes(include='number')
     if numeric.shape[1] < 2:
@@ -5297,7 +5297,7 @@ else:
         print(f'\\n{first_col} 的正态性检验: W={stat:.4f}, p={p:.4f}')`,
   r_stats:`# R 描述性统计
 if(!exists('.df') || !is.data.frame(.df)){
-  cat('⚠ .df 不存在，请先在左侧「📁 文件 / 数据」上传 CSV 或点击「📊 加载示例数据」\\n')
+  cat('⚠ .df 不存在，请先在左侧「📁 文件 / 数据」上传 CSV 或点击「加载示例数据」\\n')
 } else {
   cat('=== 描述性统计 ===\\n')
   print(summary(.df))
@@ -5309,7 +5309,7 @@ if(!exists('.df') || !is.data.frame(.df)){
 }`,
   r_viz:`# R 可视化
 if(!exists('.df') || !is.data.frame(.df)){
-  cat('⚠ .df 不存在，请先在左侧「📁 文件 / 数据」上传 CSV 或点击「📊 加载示例数据」\\n')
+  cat('⚠ .df 不存在，请先在左侧「📁 文件 / 数据」上传 CSV 或点击「加载示例数据」\\n')
 } else {
   nums <- sapply(.df, is.numeric)
   num_cols <- names(.df)[nums][1:min(6, sum(nums))]
@@ -5318,12 +5318,12 @@ if(!exists('.df') || !is.data.frame(.df)){
   } else {
     par(mfrow=c(2,3), mar=c(4,4,2,1))
     for(col in num_cols) hist(.df[[col]], main=col, breaks=30, col='steelblue', border='white')
-    cat('✅ 已绘制', length(num_cols), '个数值变量的直方图\\n')
+    cat('已绘制', length(num_cols), '个数值变量的直方图\\n')
   }
 }`,
   r_linear:`# R 线性回归
 if(!exists('.df') || !is.data.frame(.df)){
-  cat('⚠ .df 不存在，请先在左侧「📁 文件 / 数据」上传 CSV 或点击「📊 加载示例数据」\\n')
+  cat('⚠ .df 不存在，请先在左侧「📁 文件 / 数据」上传 CSV 或点击「加载示例数据」\\n')
 } else {
   nums <- sapply(.df, is.numeric)
   num_cols <- names(.df)[nums]
@@ -5430,7 +5430,7 @@ async function rsRefreshEnvAsync(){
 function renderEnvList(items, lang){
   var body=document.getElementById('rs-env-body');
   if(!items || items.length===0){
-    body.innerHTML='<div class="rs-empty">暂无变量<br><button class="rs-btn primary" style="margin-top:6px" onclick="loadSampleData()">📊 加载示例数据</button></div>';
+    body.innerHTML='<div class="rs-empty">暂无变量<br><button class="rs-btn primary" style="margin-top:6px" onclick="loadSampleData()">加载示例数据</button></div>';
     return;
   }
   body.innerHTML = items.map(function(it){
@@ -5493,7 +5493,7 @@ async function rsRunCode(){
           var png=files.filter(function(f){return f.endsWith('.png')}).sort();
           if(png.length>0){
             rsDisplayPyPlot(png[png.length-1]);
-            captured.push({cls:'ok',msg:'📊 检测到 '+png.length+' 个图文件'});
+            captured.push({cls:'ok',msg:'检测到 '+png.length+' 个图文件'});
           }
         }
       }catch(e){}
@@ -5509,7 +5509,7 @@ async function rsRunCode(){
       }
       if(rResult && rResult.images && rResult.images.length>0){
         rsDisplayRPlot(rResult.images[rResult.images.length-1]);
-        captured.push({cls:'ok',msg:'📊 已生成 '+rResult.images.length+' 张图'});
+        captured.push({cls:'ok',msg:'已生成 '+rResult.images.length+' 张图'});
       }
     }
     captured.forEach(function(c){
@@ -6032,7 +6032,7 @@ def _read_csv(tx, sep):
     DF = pd.read_csv(io.StringIO(tx), sep=sep, engine="python")
     DF_COLS=list(DF.columns); DF_NROW=len(DF); DF_HEAD=DF.head(10).to_csv(index=False)
 `);
-    LOADING_PY=false; statusEl.innerHTML='✅ Pyodide 就绪 (pandas, scipy, statsmodels 已加载)';
+    LOADING_PY=false; statusEl.innerHTML='Pyodide 就绪 (pandas, scipy, statsmodels 已加载)';
   }else{
     if(WEBR) return;
     if(LOADING_R) while(LOADING_R){ await new Promise(r=>setTimeout(r,200)); if(WEBR) return; }
@@ -6044,7 +6044,7 @@ def _read_csv(tx, sep):
     while(!window._WEBR_READY){ if(Date.now()-t0>60000) throw new Error('webR 加载超时'); await new Promise(r=>setTimeout(r,300)); }
     WEBR=window._WEBR;
     await WEBR.evalRVoid(`options(warn=-1);`);
-    LOADING_R=false; statusEl.innerHTML='✅ webR 就绪 (base + stats)';
+    LOADING_R=false; statusEl.innerHTML='webR 就绪 (base + stats)';
   }
 }
 
@@ -6069,7 +6069,7 @@ async function runAnalyze(){
       var phtml = ENGINE==='py' ? await runPy(a) : await runR(a);
       htmlPieces.push(phtml);
     }
-    outEl.innerHTML = `<div class="data-head" style="margin-bottom:10px">✅ 分析完成（${ENGINE==='py'?'Python':'R'} 引擎 · ${new Date().toLocaleString()}）</div>`+htmlPieces.join('');
+    outEl.innerHTML = `<div class="data-head" style="margin-bottom:10px">分析完成（${ENGINE==='py'?'Python':'R'} 引擎 · ${new Date().toLocaleString()}）</div>`+htmlPieces.join('');
 
     var report=ENGINE==='py'?'Python':'R'+' · '+acts.map(labelOf).join('、')+' · 数据：'+(DATA?DATA._name:'无')+' ('+DATA_ROWS+'行 × '+DATA_VARS.length+'列)';
     libAdd({type:'analysis',title:ENGINE==='py'?'Python 分析报告':'R 分析报告',source:ENGINE,year:'',report:report.substring(0,300)});
@@ -6448,13 +6448,13 @@ function renderLib(){
   el.innerHTML=list.map(function(it,i){
     var time=new Date(it.time||Date.now()).toLocaleString();
     if(it.type==='paper'){
-      return '<div class="lib-item"><div><h4><a href="'+(it.url||'#')+'" target="_blank">📄 '+(it.title||'文献')+'</a></h4><div class="tag-line">'+[it.source,it.year?it.year+'年':''].filter(Boolean).join(' · ')+' · '+time+'</div></div><div><button class="btn sm" onclick="libRm('+i+')">删除</button></div></div>';
+      return '<div class="lib-item"><div><h4><a href="'+(it.url||'#')+'" target="_blank">'+(it.title||'文献')+'</a></h4><div class="tag-line">'+[it.source,it.year?it.year+'年':''].filter(Boolean).join(' · ')+' · '+time+'</div></div><div><button class="btn sm" onclick="libRm('+i+')">删除</button></div></div>';
     }
     if(it.type==='dataset'){
       return '<div class="lib-item" style="border-left:4px solid var(--warn)"><div><h4><a href="'+(it.url||'#')+'" target="_blank">📁 '+(it.title||'数据集')+'</a></h4><div class="tag-line">'+[it.source,it.year?it.year+'年':''].filter(Boolean).join(' · ')+' · '+time+' · 数据集</div></div><div><button class="btn sm" onclick="libRm('+i+')">删除</button></div></div>';
     }
     if(it.type==='analysis'){
-      return '<div class="lib-item"><div><h4>📊 '+(it.title||'分析报告')+'</h4><div class="tag-line">'+it.source+' · '+time+'</div><div class="tag-line" style="margin-top:4px;color:var(--ink2);font-size:13px">'+(it.report||'')+'</div></div><div><button class="btn sm" onclick="libRm('+i+')">删除</button></div></div>';
+      return '<div class="lib-item"><div><h4>'+(it.title||'分析报告')+'</h4><div class="tag-line">'+it.source+' · '+time+'</div><div class="tag-line" style="margin-top:4px;color:var(--ink2);font-size:13px">'+(it.report||'')+'</div></div><div><button class="btn sm" onclick="libRm('+i+')">删除</button></div></div>';
     }
     return '<div class="lib-item"><div><h4>'+(it.title||'')+'</h4><div class="tag-line">'+it.type+' · '+time+'</div></div><div><button class="btn sm" onclick="libRm('+i+')">删除</button></div></div>';
   }).join('');
@@ -6512,17 +6512,17 @@ async function runAgentAnalysis(){
   try{
     var list1=await withTimeout(fetchPubmed(q,yMin),12000,'PubMed');
     papers=papers.concat(list1); sourcesOk++;
-    st.innerHTML+='<div style="margin-top:4px;color:var(--ok)">&nbsp;&nbsp;✅ PubMed: '+list1.length+' 篇</div>';
+    st.innerHTML+='<div style="margin-top:4px;color:var(--ok)">&nbsp;&nbsp;PubMed: '+list1.length+' 篇</div>';
   }catch(e){errLog.push('PubMed: '+e.message);st.innerHTML+='<div style="margin-top:4px;color:#b26a00">&nbsp;&nbsp;⚠️ PubMed 跳过（'+e.message+'）</div>'}
   try{
     var list2=await withTimeout(fetchCrossref(q,yMin),12000,'Crossref');
     papers=papers.concat(list2); sourcesOk++;
-    st.innerHTML+='<div style="margin-top:4px;color:var(--ok)">&nbsp;&nbsp;✅ Crossref: '+list2.length+' 篇</div>';
+    st.innerHTML+='<div style="margin-top:4px;color:var(--ok)">&nbsp;&nbsp;Crossref: '+list2.length+' 篇</div>';
   }catch(e){errLog.push('Crossref: '+e.message);st.innerHTML+='<div style="margin-top:4px;color:#b26a00">&nbsp;&nbsp;⚠️ Crossref 跳过（'+e.message+'）</div>'}
   try{
     var list3=await withTimeout(fetchS2(q,yMin),14000,'S2');
     papers=papers.concat(list3); sourcesOk++;
-    st.innerHTML+='<div style="margin-top:4px;color:var(--ok)">&nbsp;&nbsp;✅ Semantic Scholar: '+list3.length+' 篇</div>';
+    st.innerHTML+='<div style="margin-top:4px;color:var(--ok)">&nbsp;&nbsp;Semantic Scholar: '+list3.length+' 篇</div>';
   }catch(e){errLog.push('S2: '+e.message);st.innerHTML+='<div style="margin-top:4px;color:#b26a00">&nbsp;&nbsp;⚠️ S2 跳过（'+e.message+'）</div>'}
   try{ papers=dedupePapers(papers); }catch(e){errLog.push('dedupe: '+e.message);papers=papers||[]}
   /* 心理健康相关性过滤 */
@@ -6531,10 +6531,10 @@ async function runAgentAnalysis(){
   papers=mhFilter.filtered;
   if(mhFilter.removed.length>0){
     errLog.push('相关性过滤：移除 '+mhFilter.removed.length+' 篇无关文献（保留 '+papers.length+' 篇）');
-    st.innerHTML+='<div style="margin-top:4px;color:#b26a00">&nbsp;&nbsp;🔍 相关性过滤：移除 '+mhFilter.removed.length+' 篇疑似非心理健康相关文献，保留 '+papers.length+' 篇</div>';
+    st.innerHTML+='<div style="margin-top:4px;color:#b26a00">&nbsp;&nbsp;相关性过滤：移除 '+mhFilter.removed.length+' 篇疑似非心理健康相关文献，保留 '+papers.length+' 篇</div>';
   }
   setStep(1,'done');
-  st.innerHTML+='<div style="margin-top:4px;color:var(--ok);font-weight:600">✅ 合计文献: '+papers.length+' 篇（去重+过滤后）</div>';
+  st.innerHTML+='<div style="margin-top:4px;color:var(--ok);font-weight:600">合计文献: '+papers.length+' 篇（去重+过滤后）</div>';
 
   /* -------- Step 2: datasets -------- */
   setStep(2,'active');
@@ -6545,16 +6545,16 @@ async function runAgentAnalysis(){
     var dsFilter=filterMentalHealthDatasets(datasets,q);
     if(dsFilter.removed.length>0){
       errLog.push('数据集过滤：移除 '+dsFilter.removed.length+' 个无关数据集');
-      st.innerHTML+='<div style="margin-top:4px;color:#b26a00">&nbsp;&nbsp;🔍 数据集相关性过滤：保留 '+dsFilter.filtered.length+' 个</div>';
+      st.innerHTML+='<div style="margin-top:4px;color:#b26a00">&nbsp;&nbsp;数据集相关性过滤：保留 '+dsFilter.filtered.length+' 个</div>';
     }
     datasets=dsFilter.filtered;
     setStep(2,'done');
-    st.innerHTML+='<div style="margin-top:4px;color:var(--ok)">✅ 数据集: '+datasets.length+' 个（过滤后）</div>';
+    st.innerHTML+='<div style="margin-top:4px;color:var(--ok)">数据集: '+datasets.length+' 个（过滤后）</div>';
   }catch(e){errLog.push('Zenodo: '+e.message);datasets=[]; setStep(2,'done');st.innerHTML+='<div style="margin-top:4px;color:#b26a00">⚠️ Zenodo 跳过（'+e.message+'），继续后续流程</div>'}
 
   /* -------- Step 3: bibliometrics -------- */
   setStep(3,'active');
-  st.innerHTML+='<div style="margin-top:8px">📊 正在做文献计量分析...</div>';
+  st.innerHTML+='<div style="margin-top:8px">正在做文献计量分析...</div>';
   try{
     stats=computeBibliometrics(papers,q)||emptyStats();
     setStep(3,'done');
@@ -7339,7 +7339,7 @@ function renderAgentInsights(papers,stats){
         return ((p.title||'').toLowerCase()+' '+(p.abstract||'').toLowerCase()).indexOf(w)>=0;
       }).slice(0,5);
       if(matched.length===0) return;
-      topicHtml+='<div class="topic-group"><h5>🔑 <b>'+w+'</b>（出现 '+kw[1]+' 次，覆盖 '+matched.length+' 篇文献）</h5><ul>';
+      topicHtml+='<div class="topic-group"><h5><b>'+w+'</b>（出现 '+kw[1]+' 次，覆盖 '+matched.length+' 篇文献）</h5><ul>';
       matched.forEach(function(p){
         var s=makeStructuredAbstract(p);
         var brief='';
@@ -7572,7 +7572,7 @@ async function qaAsk(){
   if(!AGENT_LAST||!AGENT_LAST.papers||AGENT_LAST.papers.length===0){ alert('请先在上方完成一次「🚀 启动智能分析」，构建文献库后再提问'); return }
   var hist=document.getElementById('qa-history');
   var blockId='qa-'+Date.now();
-  hist.insertAdjacentHTML('beforeend','<div class="qa-block" id="'+blockId+'" style="margin-bottom:14px"><div class="qa-q" style="background:#eef5ff;border:1px solid #cfe0ff;padding:8px 12px;border-radius:6px 6px 0 6px;max-width:80%;margin-left:auto"><b>🙋 提问：</b>'+escapeHtml(q)+'</div><div class="qa-a" style="margin-top:8px;background:#f6ffed;border:1px solid #cdeac0;padding:10px 12px;border-radius:0 6px 6px 6px"><div id="'+blockId+'-body">🔍 正在从 '+qaBuildIndex().posts.length+' 篇文献中检索相关证据…</div></div></div>');
+  hist.insertAdjacentHTML('beforeend','<div class="qa-block" id="'+blockId+'" style="margin-bottom:14px"><div class="qa-q" style="background:#eef5ff;border:1px solid #cfe0ff;padding:8px 12px;border-radius:6px 6px 0 6px;max-width:80%;margin-left:auto"><b>🙋 提问：</b>'+escapeHtml(q)+'</div><div class="qa-a" style="margin-top:8px;background:#f6ffed;border:1px solid #cdeac0;padding:10px 12px;border-radius:0 6px 6px 6px"><div id="'+blockId+'-body">正在从 '+qaBuildIndex().posts.length+' 篇文献中检索相关证据…</div></div></div>');
   input.value='';
   try{
     var results=qaSearch(q,8);
@@ -7583,7 +7583,7 @@ async function qaAsk(){
       return;
     }
     // 先渲染抽取式答案
-    var html='<div style="font-size:12px;color:var(--muted);margin-bottom:6px">✅ 共命中 '+extract.count+' 篇文献，以下为基于原文证据的抽取式回答：</div>';
+    var html='<div style="font-size:12px;color:var(--muted);margin-bottom:6px">共命中 '+extract.count+' 篇文献，以下为基于原文证据的抽取式回答：</div>';
     html+='<div style="font-size:13.5px;line-height:1.7;color:var(--ink2)"><b>📝 回答（抽取式，无幻觉）：</b><ol style="margin:6px 0 8px 22px;padding:0">';
     extract.points.forEach(function(pt){
       html+='<li>['+pt.r+'] '+(pt.text||'').slice(0,260)+'</li>';
@@ -7747,7 +7747,7 @@ function loadAgentDataToAnalyze(){
   RS_FILES.push({name:'agent_papers.csv',rows:rows.length,vars:vars.length,time:Date.now()});
   go('analyze');
   setTimeout(function(){
-    rsLog('📊 已加载智能分析爬取的 '+rows.length+' 篇文献数据','ok');
+    rsLog('已加载智能分析爬取的 '+rows.length+' 篇文献数据','ok');
     if(typeof rsRenderFileList==='function') rsRenderFileList();
     rsRefreshEnv();
     var ed=document.getElementById('rs-code');
@@ -7795,7 +7795,7 @@ function init(){
 <script src="datasets.js"></script>
 <script src="literature.js"></script>
 <script>
-/* ==================== 🏥 卫生健康数据智能库 ==================== */
+/* ==================== 卫生健康数据智能库 ==================== */
 var H_ADMIN_PASS='haiyan-health-2026';
 var HEALTH_INDEX=null;
 /* === 4 类数据百度网盘分享（固定链接） === */
@@ -7923,8 +7923,8 @@ function hRenderFourCards(){
     html+='</div></div>';
     html+='<div style="padding:14px 18px;flex:1;display:flex;flex-direction:column;gap:10px">';
     html+='<div style="display:flex;gap:10px;flex-wrap:wrap">';
-    if(d.e>0) html+='<span class="chip" style="background:'+pan.color+'12;color:'+pan.color+';border-color:'+pan.color+'40;font-size:12px">📊 '+d.e+' 张 Excel</span>';
-    if(d.p>0) html+='<span class="chip" style="background:#64748b12;color:#64748b;border-color:#64748b40;font-size:12px">📄 '+d.p+' 本 PDF</span>';
+    if(d.e>0) html+='<span class="chip" style="background:'+pan.color+'12;color:'+pan.color+';border-color:'+pan.color+'40;font-size:12px">'+d.e+' 张 Excel</span>';
+    if(d.p>0) html+='<span class="chip" style="background:#64748b12;color:#64748b;border-color:#64748b40;font-size:12px">'+d.p+' 本 PDF</span>';
     html+='</div>';
     html+='<div style="font-size:13px;color:#475569;line-height:1.65;flex:1">'+esc(d.desc)+'</div>';
     if(d.topics&&d.topics.length){
@@ -7935,7 +7935,7 @@ function hRenderFourCards(){
       html+='</div>';
     }
     html+='<div style="margin-top:6px;display:flex;justify-content:flex-end">';
-    html+='<a class="btn primary sm" href="'+esc(pan.url)+'" target="_blank" rel="noopener" style="background:'+pan.color+';border-color:'+pan.color+'">🟢 百度网盘下载 →</a>';
+    html+='<a class="btn primary sm" href="'+esc(pan.url)+'" target="_blank" rel="noopener" style="background:'+pan.color+';border-color:'+pan.color+'">百度网盘下载 →</a>';
     html+='</div></div></div>';
   });
   grid.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px">'+html+'</div>';
@@ -7968,7 +7968,7 @@ function hRenderAdminCards(){
     html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px">';
     html+='<div><div style="font-weight:700;font-size:14.5px;color:var(--ink)">'+esc(k)+'</div>';
     html+='<div style="font-size:12px;color:'+pan.color+';margin-top:1px">'+esc(desc.cn)+' · '+esc(desc.yr)+'</div></div>';
-    html+='<span class="chip" style="font-size:11px;background:'+pan.color+'12;color:'+pan.color+'">📊 '+(desc.e||0)+' 张</span>';
+    html+='<span class="chip" style="font-size:11px;background:'+pan.color+'12;color:'+pan.color+'">'+(desc.e||0)+' 张</span>';
     html+='</div>';
     html+='<div style="font-size:12.5px;color:#475569;line-height:1.6;margin-bottom:10px">'+esc(desc.desc)+'</div>';
     html+='<label style="font-size:12px;color:var(--muted)">百度网盘分享链接<input class="input" id="h-admin-url-'+k+'" value="'+esc(pan.url)+'" placeholder="https://pan.baidu.com/s/xxxxx" style="margin-top:4px"></label>';
@@ -7991,7 +7991,7 @@ function hAdminSave(){
   });
   try{localStorage.setItem('H_CAT_PANS',JSON.stringify(H_CAT_PANS));}catch(e){}
   hRenderFourCards();
-  alert('✅ 已保存 '+count+' 个分类的链接。\n\n如需永久生效请把新链接集成到 index.html 的 H_CAT_PANS 常量并重新部署。');
+  alert('已保存 '+count+' 个分类的链接。\n\n如需永久生效请把新链接集成到 index.html 的 H_CAT_PANS 常量并重新部署。');
 }
 function hAdminReset(){
   hRenderAdminCards();
@@ -8006,7 +8006,7 @@ function hSaveLS(){ hAdminSave(); }
 function hLoadLS(){ hRenderAdminCards(); }
 function hExportIndex(){
   var cats=Object.keys(H_CAT_PANS);
-  alert('📤 当前 H_CAT_PANS 配置：\n\n'+JSON.stringify(H_CAT_PANS,null,2)+'\n\n如需永久生效，请把以上 JSON 替换 index.html 顶部 var H_CAT_PANS={...} 块的内容。');
+  alert('当前 H_CAT_PANS 配置：\n\n'+JSON.stringify(H_CAT_PANS,null,2)+'\n\n如需永久生效，请把以上 JSON 替换 index.html 顶部 var H_CAT_PANS={...} 块的内容。');
 }
 function hImportLinksDialog(){ hRenderAdminCards(); }
 function hImportLinksFile(){}
@@ -8152,16 +8152,16 @@ function hDoSearch(){
       html+='<span class="chip" style="background:'+pan.color+'15;color:'+pan.color+';border-color:'+pan.color+'40">'+esc(catDesc.cn)+'</span>';
       if(r.gs&&q) html+=' <span class="chip ok">匹配 '+r.gs+'</span>';
       html+='</div>';
-      html+='<div style="color:var(--muted);font-size:13px">📊 '+g.excel_count+' 张表格 · 📄 '+g.pdf_count+' 本PDF</div>';
+      html+='<div style="color:var(--muted);font-size:13px">'+g.excel_count+' 张表格 · '+g.pdf_count+' 本PDF</div>';
       html+='</div>';
       // 下载按钮（固定指向分类级百度网盘链接）
       html+='<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">';
-      html+='<a class="btn primary sm" href="'+esc(pan.url)+'" target="_blank" rel="noopener" style="background:'+pan.color+';border-color:'+pan.color+'">🟢 百度网盘下载 →</a>';
+      html+='<a class="btn primary sm" href="'+esc(pan.url)+'" target="_blank" rel="noopener" style="background:'+pan.color+';border-color:'+pan.color+'">百度网盘下载 →</a>';
       html+='</div></div>';
 
       // PDF 列表
       if(g.pdfs&&g.pdfs.length){
-        html+='<div style="margin-top:12px"><div style="font-size:13px;color:var(--muted);margin-bottom:4px">📄 PDF 文档（'+g.pdf_count+' 本，含扫描版）：</div><div style="display:flex;flex-direction:column;gap:4px">';
+        html+='<div style="margin-top:12px"><div style="font-size:13px;color:var(--muted);margin-bottom:4px">PDF 文档（'+g.pdf_count+' 本，含扫描版）：</div><div style="display:flex;flex-direction:column;gap:4px">';
         r.pScores.slice(0,10).forEach(function(x){
           var hit=q?x.s>0:true;
           var badge=x.p.type==='目录'?'📋':(x.p.type==='扫描版'?'📸':'📑');
@@ -8177,7 +8177,7 @@ function hDoSearch(){
       if(r.eScores.length){
         var shown=r.eScores.slice(0,10);
         var more=r.eScores.slice(10);
-        html+='<div style="margin-top:12px"><div style="font-size:13px;color:var(--muted);margin-bottom:4px">📊 匹配的表格（'+r.eScores.length+' 张）：</div>';
+        html+='<div style="margin-top:12px"><div style="font-size:13px;color:var(--muted);margin-bottom:4px">匹配的表格（'+r.eScores.length+' 张）：</div>';
         html+='<div id="h-e-'+gi+'-top">';
         var renderExcelRow=function(x){
           var row='<div style="padding:5px 8px;margin-bottom:4px;border-radius:6px;background:rgba(245,243,255,1);border-left:3px solid var(--accent)">';
@@ -8233,17 +8233,17 @@ function hEmptyWelcomeHTML(){
   var html='<div style="max-width:1200px;margin:0 auto">';
   // Hero
   html+='<div style="background:linear-gradient(135deg,#0ea5e9,#7c3aed);color:#fff;padding:28px 32px;border-radius:16px;margin-bottom:22px;box-shadow:0 10px 30px rgba(14,165,233,.2)">';
-  html+='<h2 style="margin:0 0 6px;font-size:24px">🏥 卫生健康数据智能库</h2>';
+  html+='<h2 style="margin:0 0 6px;font-size:24px">卫生健康数据智能库</h2>';
   html+='<p style="margin:0;opacity:.94;line-height:1.7;font-size:14.5px">覆盖 <b>'+cats.length+'</b> 大分类 · <b>'+(meta.total_excels||0)+'</b> 张 Excel 表格 · <b>'+(meta.total_pdfs||0)+'</b> 本 PDF 说明文档 · 时间跨度 <b>'+yMin+'—'+yMax+'</b><br>请在上方输入关键词，系统仅返回<strong style="color:#fef08a">与检索相关</strong>的数据集；也可以直接点击下方分类卡片进入对应整包下载。</p>';
   html+='<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">';
   html+='<button class="btn sm" onclick="hQuick(\'床位数 病床使用率\')" style="background:#fff;color:#1e40af;border-color:#fff">🛏️ 医疗资源（床位/人力）</button>';
-  html+='<button class="btn sm" onclick="hQuick(\'诊疗人次 门诊 住院\')" style="background:#fff;color:#1e40af;border-color:#fff">🏥 医疗服务利用</button>';
+  html+='<button class="btn sm" onclick="hQuick(\'诊疗人次 门诊 住院\')" style="background:#fff;color:#1e40af;border-color:#fff">医疗服务利用</button>';
   html+='<button class="btn sm" onclick="hQuick(\'卫生总费用 医疗费用\')" style="background:#fff;color:#1e40af;border-color:#fff">💰 卫生经费与费用</button>';
   html+='<button class="btn sm" onclick="hQuick(\'孕产妇死亡率 儿童死亡率\')" style="background:#fff;color:#1e40af;border-color:#fff">👩‍👧 妇幼与健康结果</button>';
   html+='<button class="btn sm" onclick="hShowResearchSuggestions()" style="background:#fef08a;color:#92400e;border-color:#fde047;font-weight:600">🤖 查看研究建议与方法</button>';
   html+='</div></div>';
   // 4 类数据卡片（真实统计 + 描述 + 下载）
-  html+='<h3 style="margin:0 0 14px;font-size:17px;color:#1e293b">📦 四类年鉴数据 · 直接下载整包</h3>';
+  html+='<h3 style="margin:0 0 14px;font-size:17px;color:#1e293b">四类年鉴数据 · 直接下载整包</h3>';
   html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">';
   cats.forEach(function(k){
     var d=H_CAT_DESC[k]||{cn:'',yr:'',e:0,p:0,desc:'',topics:[]};
@@ -8257,8 +8257,8 @@ function hEmptyWelcomeHTML(){
     html+='</div></div>';
     html+='<div style="padding:14px 18px;flex:1;display:flex;flex-direction:column;gap:12px">';
     html+='<div style="display:flex;gap:10px;flex-wrap:wrap">';
-    if(d.e>0) html+='<span class="chip" style="background:'+pan.color+'12;color:'+pan.color+';border-color:'+pan.color+'40;font-size:12px">📊 '+d.e+' 张 Excel</span>';
-    if(d.p>0) html+='<span class="chip" style="background:#64748b12;color:#64748b;border-color:#64748b40;font-size:12px">📄 '+d.p+' 本 PDF</span>';
+    if(d.e>0) html+='<span class="chip" style="background:'+pan.color+'12;color:'+pan.color+';border-color:'+pan.color+'40;font-size:12px">'+d.e+' 张 Excel</span>';
+    if(d.p>0) html+='<span class="chip" style="background:#64748b12;color:#64748b;border-color:#64748b40;font-size:12px">'+d.p+' 本 PDF</span>';
     html+='</div>';
     html+='<div style="font-size:13px;color:#475569;line-height:1.65;flex:1">'+esc(d.desc)+'</div>';
     html+='<div style="display:flex;flex-wrap:wrap;gap:4px">';
@@ -8266,7 +8266,7 @@ function hEmptyWelcomeHTML(){
     html+='</div>';
     html+='</div>';
     html+='<div style="padding:12px 18px;border-top:1px solid var(--border);background:#fafafa;display:flex;justify-content:flex-end">';
-    html+='<a class="btn primary sm" href="'+esc(pan.url)+'" target="_blank" rel="noopener" style="background:'+pan.color+';border-color:'+pan.color+'">🟢 百度网盘下载 →</a>';
+    html+='<a class="btn primary sm" href="'+esc(pan.url)+'" target="_blank" rel="noopener" style="background:'+pan.color+';border-color:'+pan.color+'">百度网盘下载 →</a>';
     html+='</div></div>';
   });
   html+='</div>';
@@ -8287,7 +8287,7 @@ function hResearchMethodBank(){
   /* 方法→研究设计映射库：关键词命中的主题 → 推荐研究设计与对应方法学参考 */
   return [
     {kw:['床位数','病床','床位','卫生人员','执业医师','卫生技术人员','每千人口','机构数','医院数','村卫生室','基层医疗','社区卫生','乡镇卫生院','医疗资源','卫生资源','护士','医技人员','卫生人力','设备','建筑面积'],
-     topic:'🏥 医疗资源供给与公平性',
+     topic:'医疗资源供给与公平性',
      designs:[
        {n:'省际/城乡资源配置公平性分析',m:'计算Gini系数、Theil指数、Atkinson指数；按东中西/城乡分解贡献；洛伦兹曲线可视化。'},
        {n:'空间可达性与布局优化',m:'2SFCA两步移动搜索法或增强E2SFCA；按地理单元计算可达性；GIS或R的sf/lwgeom包。'},
@@ -8301,7 +8301,7 @@ function hResearchMethodBank(){
        '按每千人口标准测算：31个省份在2025年达到WHO推荐目标的缺口有多大？分省给出补齐优先级。'
      ]},
     {kw:['诊疗人次','门诊','住院','入院','出院','床位使用率','平均住院日','医师工作量','诊疗','门诊服务','住院服务','就诊率','两周就诊率','住院率'],
-     topic:'🏥 医疗服务利用与效率评估',
+     topic:'医疗服务利用与效率评估',
      designs:[
        {n:'时间序列趋势分解',m:'STL分解或X-13ARIMA-SEATS；分离长期趋势、季节性与政策冲击异常。'},
        {n:'人群利用差异分解',m:'按年龄/性别/城乡/收入分组的Oaxaca-Blinder分解；理解两周就诊率/住院率差异来源。'},
@@ -8436,7 +8436,7 @@ function hShowResearchSuggestions(){
   var html='';
   // Sec 1 数据画像
   html+='<div style="background:linear-gradient(135deg,#eff6ff,#eef2ff);border-radius:12px;padding:16px 18px;margin-bottom:16px">';
-  html+='<div style="font-weight:600;font-size:15.5px;color:#1e3a8a;margin-bottom:8px">📊 一、当前检索的数据画像</div>';
+  html+='<div style="font-weight:600;font-size:15.5px;color:#1e3a8a;margin-bottom:8px">一、当前检索的数据画像</div>';
   html+='<div style="font-size:14px;color:#1e293b;line-height:1.9">';
   if(!q && !yr && !document.getElementById('h-cat').value){
     html+='未设置关键词或筛选 → 以下为整个卫生健康智能库的<strong>整体数据结构</strong>建议。若输入 <em style="background:#fef08a">具体关键词</em>（如：床位数、孕产妇死亡率、卫生总费用），建议将更具针对性。<hr style="margin:10px 0;border:none;border-top:1px dashed #93c5fd">';
@@ -8483,7 +8483,7 @@ function hShowResearchSuggestions(){
   // 去重
   var seen={}; refs=refs.filter(function(r){var k=(r.p.doi||r.p.pmid||r.p.title);if(!k||seen[k])return false;seen[k]=1;return true;}).slice(0,6);
   if(!refs.length){
-    html+='<div class="empty-tip">当前主题未在文献库中检索到高匹配条目。建议先在【🔍 文献/数据集检索】Tab搜索相关方法论文献。</div>';
+    html+='<div class="empty-tip">当前主题未在文献库中检索到高匹配条目。建议先在【文献/数据集检索】Tab搜索相关方法论文献。</div>';
   } else {
     html+='<div style="font-size:13.5px;color:#0f172a;line-height:1.9">';
     refs.forEach(function(r,i){
@@ -8556,7 +8556,7 @@ function hSetMode(m){
   h_mode=m;
   localStorage.setItem('HEALTH_DL_MODE', m);
   ['pan','gh','both'].forEach(function(x){ document.getElementById('h-mode-'+x).classList.remove('teal'); });
-  var map={pan:'🟢 百度网盘模式 · 分享链接直下'};
+  var map={pan:'百度网盘模式 · 分享链接直下'};
   document.getElementById('h-mode-'+(m==='github'?'gh':m)).classList.add('teal');
   document.getElementById('h-mode-info').textContent='当前：'+map[m];
   hDoSearch();
@@ -8646,21 +8646,21 @@ async function hGhLoadManifest(){
     hGhBuildIndex(m);
     hGhRecompute();
     // 拿第一个小文件做一次密码校验（可选）
-    var statusHtml='✅ manifest 加载成功！<br>'
-      +'&nbsp;&nbsp;📦 加密文件总数：<b>'+(m.stats&&m.stats.enc_files||'?')+'</b><br>'
-      +'&nbsp;&nbsp;📊 年份组覆盖：<b>'+Object.keys(H_GITHUB.indexByGid).length+' / '+(HEALTH_INDEX?HEALTH_INDEX.groups.length:'?')+'</b><br>';
+    var statusHtml='manifest 加载成功！<br>'
+      +'&nbsp;&nbsp;加密文件总数：<b>'+(m.stats&&m.stats.enc_files||'?')+'</b><br>'
+      +'&nbsp;&nbsp;年份组覆盖：<b>'+Object.keys(H_GITHUB.indexByGid).length+' / '+(HEALTH_INDEX?HEALTH_INDEX.groups.length:'?')+'</b><br>';
     if(pwd){
       var firstRel=(H_GITHUB.manifest.files && H_GITHUB.manifest.files.length && H_GITHUB.manifest.files[0].rel_path);
       if(firstRel){
         try{
           await hGhTestDecrypt(firstRel, pwd);
-          statusHtml+='&nbsp;&nbsp;🔑 <b style="color:#065f46">密码校验通过！（decrypt auth tag OK）</b><br>';
+          statusHtml+='&nbsp;&nbsp;<b style="color:#065f46">密码校验通过！（decrypt auth tag OK）</b><br>';
         }catch(err){
-          statusHtml+='&nbsp;&nbsp;🔑 <b style="color:#991b1b">密码校验失败：'+esc(err.message)+'</b>（请检查与 step2 设置的密码一致）<br>';
+          statusHtml+='&nbsp;&nbsp;<b style="color:#991b1b">密码校验失败：'+esc(err.message)+'</b>（请检查与 step2 设置的密码一致）<br>';
         }
       }
     } else {
-      statusHtml+='&nbsp;&nbsp;🔑 <i>未输入密码 · 点击任一【🔒 下载】按钮时会弹窗要求输入</i><br>';
+      statusHtml+='&nbsp;&nbsp;<i>未输入密码 · 点击任一【🔒 下载】按钮时会弹窗要求输入</i><br>';
     }
     statusHtml+='&nbsp;&nbsp;🌐 CDN 前缀：<code style="font-size:12px">'+esc(H_GITHUB.prefix)+'</code>';
     document.getElementById('h-gh-status').innerHTML=statusHtml;
@@ -8719,7 +8719,7 @@ async function hGhDownloadRel(relPath, suggestOrigName){
     var r=await fetch(url, {cache:'force-cache'});
     if(!r.ok) throw new Error('HTTP '+r.status+' '+url);
     var buf=await r.arrayBuffer();
-    hGhToastStart('🔐 解密中（AES-256-GCM）…');
+    hGhToastStart('解密中（AES-256-GCM）…');
     var out=await hDecryptEnc(buf, pwd);
     hGhToastClose();
     // 保存
@@ -8926,7 +8926,7 @@ async function hGhLoadManifestSilent(){
     hGhBuildIndex(m);
     hGhRecompute();
     var pwd=document.getElementById('h-gh-pwd').value;
-    var ok='✅ 已自动加载清单（'+Object.keys(H_GITHUB.indexByGid).length+' 年份组）';
+    var ok='已自动加载清单（'+Object.keys(H_GITHUB.indexByGid).length+' 年份组）';
     if(pwd) ok+=' · 已记住密码';
     document.getElementById('h-gh-status').textContent=ok;
     if(typeof hDoSearch==='function') hDoSearch();
@@ -9042,7 +9042,7 @@ function renderLits(){
       // ref 通常包含作者+标题+期刊，若长度超过 140 说明含摘要信息，截取 140 字展示
       if(refText.length>140){
         var snippet=refText.slice(refText.indexOf(' ', refText.indexOf('.')+4)>=0?Math.min(refText.indexOf(' ', refText.indexOf('.')+4)+1,80):80, 80+160);
-        absSnippet='<p style="font-size:12px;color:var(--ink2);margin:4px 0 8px;line-height:1.6;background:#f9fbfd;padding:4px 8px;border-left:3px solid var(--accent);border-radius:0 3px 3px 0">📄 '+escLit(refText.length>150?refText.slice(80,240)+'…':refText)+'</p>';
+        absSnippet='<p style="font-size:12px;color:var(--ink2);margin:4px 0 8px;line-height:1.6;background:#f9fbfd;padding:4px 8px;border-left:3px solid var(--accent);border-radius:0 3px 3px 0">'+escLit(refText.length>150?refText.slice(80,240)+'…':refText)+'</p>';
       }
       return '<div class="dset-card" style="cursor:pointer" onclick="openLit('+l._idx+')"><div style="display:flex;justify-content:space-between;align-items:flex-start"><h4 style="font-size:13.5px;line-height:1.4">'+escLit(litShort(l.ref,110))+'</h4><span class="chip '+tagClass+'">'+escLit(l.catName)+'</span></div>'+absSnippet+'<p style="font-size:12px;color:var(--muted);margin:6px 0">'+escLit(srcLine)+'</p><div class="dc-foot"><span>DOI</span><span>'+doiLink+'</span></div></div>';
     }).join('');
@@ -9059,7 +9059,7 @@ function openLit(idx){
   if(!c)return;
   var doiLink=l.doi?('<a href="https://doi.org/'+encodeURIComponent(l.doi)+'" target="_blank">'+escLit(l.doi)+'</a>'):'<span style="color:var(--muted)">未提供</span>';
   var html='<button class="close-btn" onclick="document.getElementById(\'lit-modal-bg\').style.display=\'none\'">×</button>';
-  html+='<h3 style="font-size:16px;line-height:1.5">📄 文献详情</h3>';
+  html+='<h3 style="font-size:16px;line-height:1.5">文献详情</h3>';
   html+='<h4 style="margin-top:12px">完整引文 / 摘要信息</h4><div style="font-size:13px;line-height:1.8;background:#f9fbfd;padding:10px 12px;border-left:3px solid var(--accent);border-radius:0 3px 3px 0">'+escLit(l.ref)+'</div>';
   // Try to produce structured Chinese research summary from ref string
   if(typeof makeStructuredAbstract==='function'){
