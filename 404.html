@@ -8038,7 +8038,7 @@ function hGlobalHint(g, extra){
   // 生成"网盘中定位提示"：3.卫生健康统计年鉴 → 2023 年 → [中国卫生健康统计年鉴2023EXCEL/ 章节 7-9-8 xxx.xls]
   var parts=[esc(g.cat_cn)+'（'+esc(g.cat_key)+'）',esc(g.year)+' 年'];
   if(extra) parts.push(esc(extra));
-  return '🎯 网盘中定位：<b>'+parts.join(' → ')+'</b>'+(H_GLOBAL.pwd?(' · 提取码：<span class="kbd" style="background:#fef3c7">'+esc(H_GLOBAL.pwd)+'</span>'):'');
+  return '🎯 网盘中定位：<b>'+parts.join(' → ')+'</b>'+;
 }
 function hIsGroupLinked(g){
   var l=H_LINKS[g.group_id]||{};
@@ -8944,7 +8944,7 @@ function hMergeLinks(idx){
 }
 
 /* =========================================================
- * 🔒 GitHub 加密直下模块（WebCrypto AES-256-GCM + PBKDF2）
+ * 百度网盘直下模块（简化版）
  * 配合 step2_encrypt_for_github.js 生成的 enc 文件头格式：
  *  offset  len  content
  *    0      8   MAGIC: "ENCv1.00"
@@ -8975,7 +8975,7 @@ function hSetMode(m){
   h_mode=m;
   localStorage.setItem('HEALTH_DL_MODE', m);
   ['pan','gh','both'].forEach(function(x){ document.getElementById('h-mode-'+x).classList.remove('teal'); });
-  var map={pan:'🟢 百度网盘模式 · 分享链接+提取码', github:'🔒 GitHub加密直下 · 解密秒下不限速', both:'🔀 双模式并排 · 手动比较'};
+  var map={pan:'🟢 百度网盘模式 · 分享链接直下'};
   document.getElementById('h-mode-'+(m==='github'?'gh':m)).classList.add('teal');
   document.getElementById('h-mode-info').textContent='当前：'+map[m];
   hDoSearch();
