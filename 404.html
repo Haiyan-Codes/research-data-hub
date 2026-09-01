@@ -7997,10 +7997,10 @@ var H_ADMIN_PASS='haiyan-health-2026';
 var HEALTH_INDEX=null;
 /* === 4 类数据百度网盘分享（固定链接） === */
 var H_CAT_PANS={
-  '1.教育经费统计年鉴':    {url:'https://pan.baidu.com/s/1BedDI7INVKq1BvyWjqR-Pg', pwd:'ment', color:'#f59e0b'},
-  '2.卫生和计划生育统计年鉴':{url:'https://pan.baidu.com/s/1XT0ToiQFumUJKKBQUvzWSQ', pwd:'ment', color:'#0ea5e9'},
-  '3.卫生健康统计年鉴':    {url:'https://pan.baidu.com/s/1-_cjpSwbJ1F327KB_QytDg', pwd:'ment', color:'#10b981'},
-  '4.卫生统计年鉴':        {url:'https://pan.baidu.com/s/14vCLACtRFYGQTlY_TGiD3g', pwd:'ment', color:'#8b5cf6'},
+  '1.教育经费统计年鉴':    {url:'https://pan.baidu.com/s/1BedDI7INVKq1BvyWjqR-Pg',  color:'#f59e0b'},
+  '2.卫生和计划生育统计年鉴':{url:'https://pan.baidu.com/s/1XT0ToiQFumUJKKBQUvzWSQ',  color:'#0ea5e9'},
+  '3.卫生健康统计年鉴':    {url:'https://pan.baidu.com/s/1-_cjpSwbJ1F327KB_QytDg',  color:'#10b981'},
+  '4.卫生统计年鉴':        {url:'https://pan.baidu.com/s/14vCLACtRFYGQTlY_TGiD3g',  color:'#8b5cf6'},
 };
 var H_CAT_DESC={
   '1.教育经费统计年鉴':    {cn:'教育经费',   yr:'2021',         e:348,  p:4,  desc:'收录 2021 年度全国及各省级教育经费收入与支出明细，涵盖财政性教育经费、事业收入、捐赠收入等构成，以及各级各类教育机构（普通本科/高职/中等职业/基础教育/民办）的经费收支情况。适合教育财政、政府投入绩效、教育公平等研究。', topics:['教育经费总收入','各级各类教育经费支出明细','中央与地方教育经费','民办/公办经费比较','生均教育经费']},
@@ -8009,7 +8009,7 @@ var H_CAT_DESC={
   '4.卫生统计年鉴':        {cn:'卫生统计',   yr:'2011',          e:0,   p:1,  desc:'早期版本 PDF 索引目录，可作为早期年鉴的参考资料。', topics:['目录索引']},
 };
 var H_LINKS={};   // 保留兼容，实际已不再依赖
-var H_GLOBAL={url:'', pwd:'', enable:false, force:false};   // 不再使用全局链接
+var H_GLOBAL={url:'',  enable:false, force:false};   // 不再使用全局链接
 var H_INIT=false;
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 /* 读取/写入全局链接配置（DOM <-> H_GLOBAL） */
@@ -8133,7 +8133,7 @@ function initHealthHub(){
       try{var sp=localStorage.getItem('H_CAT_PANS');if(sp){var o=JSON.parse(sp);for(var k in o){if(k&&o[k]&&typeof o[k]==='object'&&o[k].url)H_CAT_PANS[k]=o[k];}}}catch(e){}
       var loadedGlobalFromJSON=false;
       if(idx.meta && idx.meta.global_link && typeof idx.meta.global_link==='object' && idx.meta.global_link.url){
-        H_GLOBAL=Object.assign({url:'',pwd:'',enable:true,force:false}, idx.meta.global_link);
+        H_GLOBAL=Object.assign({url:'',enable:true,force:false}, idx.meta.global_link);
         loadedGlobalFromJSON=true;
       }
       try{var gs=localStorage.getItem('HEALTH_GLOBAL');if(gs){H_GLOBAL=Object.assign(H_GLOBAL, JSON.parse(gs)||{});}}catch(e){}
@@ -8183,7 +8183,7 @@ function hRenderAdminCards(){
   var html='';
   cats.forEach(function(c){
     var k=c.key;
-    var pan=H_CAT_PANS[k]||{url:'',pwd:'',color:'#64748b'};
+    var pan=H_CAT_PANS[k]||{url:'#',color:'#64748b'};
     var desc=H_CAT_DESC[k]||{cn:c.cn,yr:'',e:0,p:0,desc:'',topics:[]};
     html+='<div style="border:1px solid var(--border);border-radius:12px;background:#fff;padding:16px">';
     html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px">';
@@ -8206,7 +8206,7 @@ function hAdminSave(){
     if(!el) return;
     var v=(el.value||'').trim();
     if(v){
-      H_CAT_PANS[k]=H_CAT_PANS[k]||{pwd:'ment',color:'#64748b'};
+      H_CAT_PANS[k]=H_CAT_PANS[k]||{color:'#64748b'};
       H_CAT_PANS[k].url=v;
       count++;
     }
@@ -8364,7 +8364,7 @@ function hDoSearch(){
       var g=r.g;
       var catKey=g.cat_key||'';
       var catDesc=H_CAT_DESC[catKey]||{cn:'未知',yr:'',e:g.excel_count,p:g.pdf_count,desc:'',topics:[]};
-      var pan=H_CAT_PANS[catKey]||{url:'#',pwd:'ment',color:'#64748b'};
+      var pan=H_CAT_PANS[catKey]||{url:'#',color:'#64748b'};
       html+='<div class="dset-card" style="cursor:initial">';
       // 卡片头部
       html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">';
@@ -8469,7 +8469,7 @@ function hEmptyWelcomeHTML(){
   html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">';
   cats.forEach(function(k){
     var d=H_CAT_DESC[k]||{cn:'',yr:'',e:0,p:0,desc:'',topics:[]};
-    var pan=H_CAT_PANS[k]||{url:'#',pwd:'ment',color:'#64748b'};
+    var pan=H_CAT_PANS[k]||{url:'#',color:'#64748b'};
     html+='<div style="border:1px solid var(--border);border-radius:14px;background:#fff;overflow:hidden;display:flex;flex-direction:column">';
     html+='<div style="padding:14px 18px;background:linear-gradient(135deg,'+pan.color+'15,'+pan.color+'05);border-bottom:1px solid var(--border)">';
     html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
@@ -8835,7 +8835,7 @@ function hLoadLS(){
     var gs=localStorage.getItem('HEALTH_GLOBAL');
     if(!s && !gs){alert('本地浏览器未找到已保存链接。');return;}
     if(s) H_LINKS=JSON.parse(s)||{};
-    if(gs) H_GLOBAL=Object.assign({url:'',pwd:'',enable:true,force:false},JSON.parse(gs)||{});
+    if(gs) H_GLOBAL=Object.assign({url:'',enable:true,force:false},JSON.parse(gs)||{});
     hGlobalWrite();
     hRenderAdminList();
     alert('↩️ 已从本地浏览器恢复：\n• '+Object.keys(H_LINKS).length+' 个年份组\n• '+(H_GLOBAL.url?'🌐 已配置全局总链接':'🌐 未配置全局总链接'));
@@ -8901,7 +8901,7 @@ function hMergeLinks(idx){
     // meta.global_link 优先（如果 url 不为空且本地 H_GLOBAL.url 为空，或 url 不相同则覆盖提示）
     var inc=idx.meta.global_link;
     if(inc.url && H_GLOBAL.url!==inc.url){
-      H_GLOBAL=Object.assign({url:'',pwd:'',enable:true,force:false}, inc);
+      H_GLOBAL=Object.assign({url:'',enable:true,force:false}, inc);
       hGlobalWrite();
       globalMsg='\n• 🌐 全局总链接：已导入 ✅';
     } else if(inc.url && H_GLOBAL.url===inc.url){
@@ -8910,7 +8910,7 @@ function hMergeLinks(idx){
   }
   // H_GLOBAL 直接导入（纯 global 格式）
   if(idx && typeof idx==='object' && idx.url && (idx.enable!==undefined||idx.pwd!==undefined) && !idx.groups){
-    H_GLOBAL=Object.assign({url:'',pwd:'',enable:true,force:false}, idx);
+    H_GLOBAL=Object.assign({url:'',enable:true,force:false}, idx);
     hGlobalWrite();
     globalMsg='\n• 🌐 全局总链接：已导入 ✅';
   }
