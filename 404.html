@@ -4638,41 +4638,18 @@ else:
   <div class="page-title"><h2>🏥 卫生健康数据智能库</h2><div class="meta" id="h-meta">载入索引中…</div></div>
 
   <div id="h-tabs" style="display:flex;gap:6px;margin-bottom:16px">
-    <button class="btn sm teal h-tab-btn active" onclick="hSwitchTab('search')">🔍 智能检索</button>
-    <button class="btn sm h-tab-btn" onclick="hSwitchTab('admin')">📝 链接录入 / 管理</button>
+    <button class="btn sm teal h-tab-btn active" onclick="hSwitchTab('search')">📦 四类年鉴数据</button>
+    <button class="btn sm h-tab-btn" onclick="hSwitchTab('admin')">🔑 链接管理</button>
   </div>
 
   <!-- ========== 子TAB 1: 智能检索 ========== -->
   <div id="h-tab-search">
-    <!-- 下载说明（已简化为单百度网盘） -->
-    <div style="margin-bottom:10px;background:linear-gradient(135deg,#f0fdf4,#ecfeff);border:1px solid #86efac;border-radius:10px;padding:10px 16px;font-size:13.5px;color:#065f46;line-height:1.7">
-      📦 全部 4 类年鉴数据已整理为 4 个百度网盘分享，每类一个整包（含 Excel + PDF）。<b>检索到匹配表格后，下载按钮会自动跳转到对应分类的网盘链接</b>。
+    <div style="margin-bottom:14px;background:linear-gradient(135deg,#f0fdf4,#ecfeff);border:1px solid #86efac;border-radius:10px;padding:10px 16px;font-size:13.5px;color:#065f46;line-height:1.7">
+      📦 每类数据整理为一个百度网盘整包（含 Excel 表格 + PDF 说明文档），点击下方卡片直接下载。
     </div>
-    <div class="toolbar" style="flex-wrap:wrap">
-      <input class="input wide" id="h-q" placeholder="输入关键词，例如：床位数、执业医师、诊疗人次、卫生总费用、妇幼保健、中医医院…（支持中英文，空格分隔多关键词 AND）" onkeydown="if(event.key==='Enter')hDoSearch()">
-      <select id="h-cat"><option value="">全部分类</option></select>
-      <select id="h-year"><option value="">全部年份</option></select>
-      <select id="h-linkonly"><option value="all">显示全部</option><option value="only">仅显示已配置下载</option></select>
-      <button class="btn primary" onclick="hDoSearch()">🔎 智能检索</button>
-      <button class="btn" style="background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;border-color:#4f46e5" onclick="hShowResearchSuggestions()">🤖 研究建议</button>
-    </div>
-    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
-      <span style="color:var(--muted);font-size:13px;align-self:center">💡 推荐快速检索：</span>
-      <a class="chip grey" onclick="hQuick('床位数 病床使用率')">病床资源</a>
-      <a class="chip grey" onclick="hQuick('执业医师 卫生技术人员')">卫生人力</a>
-      <a class="chip grey" onclick="hQuick('卫生总费用 医药费用 收支')">卫生经费</a>
-      <a class="chip grey" onclick="hQuick('诊疗人次 入院 住院 门诊')">医疗服务</a>
-      <a class="chip grey" onclick="hQuick('孕产妇 儿童 妇幼 死亡率')">妇幼健康</a>
-      <a class="chip grey" onclick="hQuick('中医 中医药')">中医药</a>
-      <a class="chip grey" onclick="hQuick('基层 社区卫生 乡镇卫生院 村卫生室')">基层医疗</a>
-      <a class="chip grey" onclick="hQuick('疾病 慢性病 两周患病率')">疾病与健康</a>
-      <a class="chip grey" onclick="hQuick('教育经费 财政')">教育经费</a>
-    </div>
-    <div id="h-summary" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(22,163,174,.06);border:1px solid var(--border);border-radius:10px;color:#0e7490">
-      匹配 <b id="h-sum-g">0</b> 个年份组 · <b id="h-sum-e">0</b> 张表格 · <b id="h-sum-p">0</b> 本PDF（<b id="h-sum-linked">0</b> 组已配置下载链接）
-    </div>
-    <div id="h-results"></div>
+    <div id="h-cards-grid"></div>
   </div>
+
 
   <!-- ========== 子TAB 2: 链接录入 ========== -->
   <div id="h-tab-admin" style="display:none">
