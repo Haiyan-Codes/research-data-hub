@@ -7795,180 +7795,6 @@ function init(){
 <script src="datasets.js"></script>
 <script src="literature.js"></script>
 <script>
-/* Dataset rendering */
-var DSET_CATS=[
-  {id:'all',name:'全部'},
-  {id:'m1',name:'中国国内'},
-  {id:'m2',name:'国际数据'},
-  {id:'m3',name:'脑科学'},
-  {id:'policy',name:'政策/监测'},
-  {id:'survey',name:'调查/队列'}
-];
-var dsetCat='all', dsetPage=0, dsetPageSize=12;
-
-function initDatasetTabs(){
-  var tabs=document.getElementById('dset-tabs');
-  if(!tabs||tabs.childElementCount>0)return;
-  tabs.innerHTML=DSET_CATS.map(function(c){return '<button class="dset-cat-btn'+(c.id==='all'?' active':'')+'" data-c="'+c.id+'" onclick="filterDsets(\''+c.id+'\')">'+c.name+'</button>'}).join('');
-}
-function filterDsets(cat){dsetCat=cat;dsetPage=0;renderDsets()}
-function matchCat(d,cat){
-  if(cat==='all')return true;
-  if(cat==='m1'||cat==='m2'||cat==='m3')return d.cat===cat;
-  if(cat==='policy')return (d.tag||'').indexOf('政策')>=0||(d.tag||'').indexOf('监测')>=0||(d.tag||'').indexOf('评估')>=0;
-  if(cat==='survey')return (d.tag||'').indexOf('调查')>=0||(d.tag||'').indexOf('队列')>=0||(d.tag||'').indexOf('CFPS')>=0||(d.tag||'').indexOf('CHARLS')>=0;
-  return false;
-}
-function renderDsets(){
-  initDatasetTabs();
-  // update active tab
-  document.querySelectorAll('#dset-tabs .dset-cat-btn').forEach(function(b){b.classList.toggle('active', b.dataset.c===dsetCat)});
-  var all=window.KNOWN_DATASETS||[];
-  var filtered=all.filter(function(d){return matchCat(d,dsetCat)});
-  var start=dsetPage*dsetPageSize,list=filtered.slice(start,start+dsetPageSize);
-  var grid=document.getElementById('dset-grid');
-  if(list.length===0){grid.innerHTML='<div class="empty-tip" style="grid-column:1/-1">此分类下暂无数据集</div>';return}
-  grid.innerHTML=list.map(function(d){
-    var tagClass=d.cat==='m1'?'ok':(d.cat==='m3'?'warn':'grey');
-    return '<div class="dset-card" onclick="openDset(\''+d.id+'\')"><div style="display:flex;justify-content:space-between;align-items:flex-start"><h4>'+d.title+'</h4><span class="chip '+tagClass+'">'+(d.tag||'')+'</span></div><div class="dc-en">'+(d.en||'')+'</div><p>'+(d.summary||'')+'</p><div class="dc-foot"><span>'+(d.footL||'')+'</span><span>'+(d.footR||'')+'</span></div></div>';
-  }).join('');
-  // pager
-  var total=Math.ceil(filtered.length/dsetPageSize),pg=document.getElementById('dset-pager');
-  pg.innerHTML='';
-  if(total>1){for(var i=0;i<total;i++){var b=document.createElement('button');b.textContent=i+1;b.className='dset-cat-btn'+(i===dsetPage?' active':'');b.onclick=(function(p){return function(){dsetPage=p;renderDsets()}})(i);pg.appendChild(b)}}
-  document.getElementById('dset-count').textContent='共 '+filtered.length+' 个数据集 · 当前第'+(dsetPage+1)+'/'+Math.max(1,total)+' 页';
-}
-function openDset(id){
-  var d=(window.KNOWN_DATASETS||[]).find(function(x){return x.id===id});if(!d)return;
-  var c=document.getElementById('dset-modal');
-  var sec='';
-  if(d.basic&&d.basic.length){sec+='<h4>基本信息</h4><table>'+d.basic.map(function(r){return '<tr><th>'+r.k+'</th><td>'+r.v+'</td></tr>'}).join('')+'</table>'}
-  if(d.struct&&d.struct.length){sec+='<h4>数据结构</h4><table>'+d.struct.map(function(r){return '<tr><th>'+r.k+'</th><td>'+r.v+'</td></tr>'}).join('')+'</table>'}
-  if(d.q&&d.q.length){sec+='<h4>研究问题</h4><table>'+d.q.map(function(r){return '<tr><th>'+r.k+'</th><td>'+r.v+'</td></tr>'}).join('')+'</table>'}
-  if(d.lit&&d.lit.length){sec+='<h4>核心文献</h4><div>'+d.lit.map(function(l){return '<div style="font-size:12px;line-height:1.6;margin-bottom:4px">'+l.ref+(l.doi?'<br><span style="color:var(--muted);font-size:11px">DOI: '+l.doi+'</span>':'')+'</div>'}).join('')+'</div>'}
-  if(d.access&&d.access.length){sec+='<h4>获取方式</h4><table>'+d.access.map(function(r){return '<tr><th>'+r.k+'</th><td>'+r.v+'</td></tr>'}).join('')+'</table>'}
-  c.innerHTML='<button class="close-btn" onclick="document.getElementById(\'dset-modal-bg\').style.display=\'none\'">×</button><h3>'+d.title+'</h3><div class="m-en">'+(d.en||'')+'</div>'+sec;
-  document.getElementById('dset-modal-bg').style.display='flex';
-}
-document.getElementById('dset-modal-bg').addEventListener('click',function(e){if(e.target.id==='dset-modal-bg')this.style.display='none'});
-
-/* Literature rendering —— 文献卡片，来源于 datasets.js 中各数据集的 lit 字段 */
-var LIT_CATS=[
-  {id:'all',name:'全部'},
-  {id:'m1',name:'中国国内'},
-  {id:'m2',name:'国际数据'},
-  {id:'m3',name:'脑科学'},
-  {id:'policy',name:'政策/监测'},
-  {id:'survey',name:'调查/队列'}
-];
-var litCat='all', litPage=0, litPageSize=12;
-function initLitTabs(){
-  var tabs=document.getElementById('lit-tabs');
-  if(!tabs||tabs.childElementCount>0)return;
-  tabs.innerHTML=LIT_CATS.map(function(c){return '<button class="dset-cat-btn'+(c.id==='all'?' active':'')+'" data-c="'+c.id+'" onclick="filterLits(\''+c.id+'\')">'+c.name+'</button>'}).join('');
-}
-function filterLits(cat){litCat=cat;litPage=0;renderLits()}
-function matchLitCat(l,cat){
-  if(cat==='all')return true;
-  if(cat==='m1'||cat==='m2'||cat==='m3')return l.cat===cat;
-  if(cat==='policy')return l.catName.indexOf('政策')>=0||l.catName.indexOf('监测')>=0||l.topic==='policy';
-  if(cat==='survey')return l.catName.indexOf('调查')>=0||l.catName.indexOf('队列')>=0||l.topic==='cohort';
-  return false;
-}
-function escLit(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function litShort(ref,max){var s=(ref||'').trim();return s.length>max?s.slice(0,max)+'…':s}
-function renderLits(){
-  initLitTabs();
-  document.querySelectorAll('#lit-tabs .dset-cat-btn').forEach(function(b){b.classList.toggle('active', b.dataset.c===litCat)});
-  var all=window.KNOWN_LITERATURE||[];
-  var filtered=all.filter(function(l){return matchLitCat(l,litCat)});
-  var start=litPage*litPageSize,list=filtered.slice(start,start+litPageSize);
-  var grid=document.getElementById('lit-grid');
-  if(!grid)return;
-  if(list.length===0){grid.innerHTML='<div class="empty-tip" style="grid-column:1/-1">此分类下暂无文献</div>';}
-  else{
-    grid.innerHTML=list.map(function(l){
-      var tagClass=l.cat==='m1'?'ok':(l.cat==='m3'?'warn':'grey');
-      var doiLink=l.doi?('<a href="https://doi.org/'+encodeURIComponent(l.doi)+'" target="_blank" onclick="event.stopPropagation()">'+escLit(l.doi)+'</a>'):'<span style="color:var(--muted)">无</span>';
-      var srcLine=(l.src||'')+ (l.src&&l.dsetTitle?' · ':'') + (l.dsetTitle?('关联：'+escLit(l.dsetTitle)):'');
-      var absSnippet='';
-      var refText=(l.ref||'').trim();
-      // ref 通常包含作者+标题+期刊，若长度超过 140 说明含摘要信息，截取 140 字展示
-      if(refText.length>140){
-        var snippet=refText.slice(refText.indexOf(' ', refText.indexOf('.')+4)>=0?Math.min(refText.indexOf(' ', refText.indexOf('.')+4)+1,80):80, 80+160);
-        absSnippet='<p style="font-size:12px;color:var(--ink2);margin:4px 0 8px;line-height:1.6;background:#f9fbfd;padding:4px 8px;border-left:3px solid var(--accent);border-radius:0 3px 3px 0">📄 '+escLit(refText.length>150?refText.slice(80,240)+'…':refText)+'</p>';
-      }
-      return '<div class="dset-card" style="cursor:pointer" onclick="openLit('+l._idx+')"><div style="display:flex;justify-content:space-between;align-items:flex-start"><h4 style="font-size:13.5px;line-height:1.4">'+escLit(litShort(l.ref,110))+'</h4><span class="chip '+tagClass+'">'+escLit(l.catName)+'</span></div>'+absSnippet+'<p style="font-size:12px;color:var(--muted);margin:6px 0">'+escLit(srcLine)+'</p><div class="dc-foot"><span>DOI</span><span>'+doiLink+'</span></div></div>';
-    }).join('');
-  }
-  var total=Math.ceil(filtered.length/litPageSize),pg=document.getElementById('lit-pager');
-  if(pg){pg.innerHTML='';if(total>1){for(var i=0;i<total;i++){var b=document.createElement('button');b.textContent=i+1;b.className='dset-cat-btn'+(i===litPage?' active':'');b.onclick=(function(p){return function(){litPage=p;renderLits()}})(i);pg.appendChild(b)}}}
-  var cnt=document.getElementById('lit-count');
-  if(cnt)cnt.textContent='共 '+filtered.length+' 条文献 · 当前第'+(litPage+1)+'/'+Math.max(1,total)+' 页';
-}
-function openLit(idx){
-  var l=(window.KNOWN_LITERATURE||[]).find(function(x){return x._idx===idx});
-  if(!l)return;
-  var c=document.getElementById('lit-modal');
-  if(!c)return;
-  var doiLink=l.doi?('<a href="https://doi.org/'+encodeURIComponent(l.doi)+'" target="_blank">'+escLit(l.doi)+'</a>'):'<span style="color:var(--muted)">未提供</span>';
-  var html='<button class="close-btn" onclick="document.getElementById(\'lit-modal-bg\').style.display=\'none\'">×</button>';
-  html+='<h3 style="font-size:16px;line-height:1.5">📄 文献详情</h3>';
-  html+='<h4 style="margin-top:12px">完整引文 / 摘要信息</h4><div style="font-size:13px;line-height:1.8;background:#f9fbfd;padding:10px 12px;border-left:3px solid var(--accent);border-radius:0 3px 3px 0">'+escLit(l.ref)+'</div>';
-  // Try to produce structured Chinese research summary from ref string
-  if(typeof makeStructuredAbstract==='function'){
-    // extract best-effort title from ref: take first sentence
-    var titleGuess=(l.ref||'').split(/[.!?]/).slice(0,2).join('. ');
-    var pseudoPaper={title:titleGuess, abstract:(l.ref||'').length>140?(l.ref):''};
-    var s=makeStructuredAbstract(pseudoPaper);
-    if(s){
-      html+='<h4 style="margin-top:14px">🧠 智能体解读（基于引文结构化提取）</h4>';
-      html+='<table style="font-size:13px"><tr><th>研究对象</th><td>'+escLit(s.population)+'</td></tr>';
-      html+='<tr><th>方法学</th><td>'+escLit(s.method)+'</td></tr>';
-      html+='<tr><th>样本量</th><td>'+escLit(s.sample)+'</td></tr>';
-      html+='<tr><th>核心发现 / 结论</th><td>'+escLit(s.finding)+'</td></tr></table>';
-    }
-  }
-  html+='<h4 style="margin-top:14px">DOI</h4><div style="font-size:13px">'+doiLink+'</div>';
-  html+='<h4 style="margin-top:14px">来源标签</h4><table><tr><th>来源</th><td>'+escLit(l.src||'未标注')+'</td></tr>';
-  html+='<tr><th>关联数据集</th><td>'+escLit(l.dsetTitle||'')+(l.dsetEn?(' ('+escLit(l.dsetEn)+')'):'')+'</td></tr>';
-  html+='<tr><th>数据集分类</th><td>'+escLit(l.catName)+'</td></tr>';
-  html+='<tr><th>主题词</th><td>'+escLit(l.topic)+'</td></tr></table>';
-  html+='<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">';
-  if(l.doi) html+='<button class="btn sm" onclick="window.open(\'https://doi.org/'+encodeURIComponent(l.doi)+'\',\'_blank\')">↗ 跳转 DOI 原文</button>';
-  if(l.dsetId) html+='<button class="btn sm" onclick="document.getElementById(\'lit-modal-bg\').style.display=\'none\';openDset(\''+l.dsetId+'\')">查看关联数据集 →</button>';
-  html+='<button class="btn sm" data-title="'+escLit(litShort(l.ref,120)).replace(/"/g,'&quot;')+'" data-type="paper" data-source="'+escLit(l.src||'已收录').replace(/"/g,'&quot;')+'" data-year="" data-url="'+(l.doi?('https://doi.org/'+encodeURIComponent(l.doi)):'')+'" data-doi="'+escLit(l.doi||'').replace(/"/g,'&quot;')+'" onclick="libAddPaper(this)">⭐ 加入收藏</button>';
-  html+='</div>';
-  c.innerHTML=html;
-  document.getElementById('lit-modal-bg').style.display='flex';
-}
-document.getElementById('lit-modal-bg').addEventListener('click',function(e){if(e.target.id==='lit-modal-bg')this.style.display='none'});
-/* init everything after all scripts loaded */
-(function(){
-  // assign _idx for lookup
-  (window.KNOWN_LITERATURE||[]).forEach(function(l,i){l._idx=i;});
-  var gate=document.getElementById('pw-gate');
-  var loggedIn=gate?gate.classList.contains('hidden'):true;
-  if(loggedIn){
-    // already authenticated
-    if(typeof init==='function') init();
-    renderDsets();
-    initDatasetTabs();
-    renderLits();
-    initLitTabs();
-    try{initHealthHub();}catch(e){console.warn('initHealthHub fail:',e);}
-  }
-  // hook for post-auth
-  window._onAuthSuccess=function(){
-    if(typeof init==='function') init();
-    renderDsets();
-    initDatasetTabs();
-    renderLits();
-    initLitTabs();
-    try{initHealthHub();}catch(e){console.warn('initHealthHub fail:',e);}
-  };
-})();
-
 /* ==================== 🏥 卫生健康数据智能库 ==================== */
 var H_ADMIN_PASS='haiyan-health-2026';
 var HEALTH_INDEX=null;
@@ -9115,6 +8941,180 @@ async function hGhLoadManifestSilent(){
     hGhInit();
   };
 })();
+/* Dataset rendering */
+var DSET_CATS=[
+  {id:'all',name:'全部'},
+  {id:'m1',name:'中国国内'},
+  {id:'m2',name:'国际数据'},
+  {id:'m3',name:'脑科学'},
+  {id:'policy',name:'政策/监测'},
+  {id:'survey',name:'调查/队列'}
+];
+var dsetCat='all', dsetPage=0, dsetPageSize=12;
+
+function initDatasetTabs(){
+  var tabs=document.getElementById('dset-tabs');
+  if(!tabs||tabs.childElementCount>0)return;
+  tabs.innerHTML=DSET_CATS.map(function(c){return '<button class="dset-cat-btn'+(c.id==='all'?' active':'')+'" data-c="'+c.id+'" onclick="filterDsets(\''+c.id+'\')">'+c.name+'</button>'}).join('');
+}
+function filterDsets(cat){dsetCat=cat;dsetPage=0;renderDsets()}
+function matchCat(d,cat){
+  if(cat==='all')return true;
+  if(cat==='m1'||cat==='m2'||cat==='m3')return d.cat===cat;
+  if(cat==='policy')return (d.tag||'').indexOf('政策')>=0||(d.tag||'').indexOf('监测')>=0||(d.tag||'').indexOf('评估')>=0;
+  if(cat==='survey')return (d.tag||'').indexOf('调查')>=0||(d.tag||'').indexOf('队列')>=0||(d.tag||'').indexOf('CFPS')>=0||(d.tag||'').indexOf('CHARLS')>=0;
+  return false;
+}
+function renderDsets(){
+  initDatasetTabs();
+  // update active tab
+  document.querySelectorAll('#dset-tabs .dset-cat-btn').forEach(function(b){b.classList.toggle('active', b.dataset.c===dsetCat)});
+  var all=window.KNOWN_DATASETS||[];
+  var filtered=all.filter(function(d){return matchCat(d,dsetCat)});
+  var start=dsetPage*dsetPageSize,list=filtered.slice(start,start+dsetPageSize);
+  var grid=document.getElementById('dset-grid');
+  if(list.length===0){grid.innerHTML='<div class="empty-tip" style="grid-column:1/-1">此分类下暂无数据集</div>';return}
+  grid.innerHTML=list.map(function(d){
+    var tagClass=d.cat==='m1'?'ok':(d.cat==='m3'?'warn':'grey');
+    return '<div class="dset-card" onclick="openDset(\''+d.id+'\')"><div style="display:flex;justify-content:space-between;align-items:flex-start"><h4>'+d.title+'</h4><span class="chip '+tagClass+'">'+(d.tag||'')+'</span></div><div class="dc-en">'+(d.en||'')+'</div><p>'+(d.summary||'')+'</p><div class="dc-foot"><span>'+(d.footL||'')+'</span><span>'+(d.footR||'')+'</span></div></div>';
+  }).join('');
+  // pager
+  var total=Math.ceil(filtered.length/dsetPageSize),pg=document.getElementById('dset-pager');
+  pg.innerHTML='';
+  if(total>1){for(var i=0;i<total;i++){var b=document.createElement('button');b.textContent=i+1;b.className='dset-cat-btn'+(i===dsetPage?' active':'');b.onclick=(function(p){return function(){dsetPage=p;renderDsets()}})(i);pg.appendChild(b)}}
+  document.getElementById('dset-count').textContent='共 '+filtered.length+' 个数据集 · 当前第'+(dsetPage+1)+'/'+Math.max(1,total)+' 页';
+}
+function openDset(id){
+  var d=(window.KNOWN_DATASETS||[]).find(function(x){return x.id===id});if(!d)return;
+  var c=document.getElementById('dset-modal');
+  var sec='';
+  if(d.basic&&d.basic.length){sec+='<h4>基本信息</h4><table>'+d.basic.map(function(r){return '<tr><th>'+r.k+'</th><td>'+r.v+'</td></tr>'}).join('')+'</table>'}
+  if(d.struct&&d.struct.length){sec+='<h4>数据结构</h4><table>'+d.struct.map(function(r){return '<tr><th>'+r.k+'</th><td>'+r.v+'</td></tr>'}).join('')+'</table>'}
+  if(d.q&&d.q.length){sec+='<h4>研究问题</h4><table>'+d.q.map(function(r){return '<tr><th>'+r.k+'</th><td>'+r.v+'</td></tr>'}).join('')+'</table>'}
+  if(d.lit&&d.lit.length){sec+='<h4>核心文献</h4><div>'+d.lit.map(function(l){return '<div style="font-size:12px;line-height:1.6;margin-bottom:4px">'+l.ref+(l.doi?'<br><span style="color:var(--muted);font-size:11px">DOI: '+l.doi+'</span>':'')+'</div>'}).join('')+'</div>'}
+  if(d.access&&d.access.length){sec+='<h4>获取方式</h4><table>'+d.access.map(function(r){return '<tr><th>'+r.k+'</th><td>'+r.v+'</td></tr>'}).join('')+'</table>'}
+  c.innerHTML='<button class="close-btn" onclick="document.getElementById(\'dset-modal-bg\').style.display=\'none\'">×</button><h3>'+d.title+'</h3><div class="m-en">'+(d.en||'')+'</div>'+sec;
+  document.getElementById('dset-modal-bg').style.display='flex';
+}
+document.getElementById('dset-modal-bg').addEventListener('click',function(e){if(e.target.id==='dset-modal-bg')this.style.display='none'});
+
+/* Literature rendering —— 文献卡片，来源于 datasets.js 中各数据集的 lit 字段 */
+var LIT_CATS=[
+  {id:'all',name:'全部'},
+  {id:'m1',name:'中国国内'},
+  {id:'m2',name:'国际数据'},
+  {id:'m3',name:'脑科学'},
+  {id:'policy',name:'政策/监测'},
+  {id:'survey',name:'调查/队列'}
+];
+var litCat='all', litPage=0, litPageSize=12;
+function initLitTabs(){
+  var tabs=document.getElementById('lit-tabs');
+  if(!tabs||tabs.childElementCount>0)return;
+  tabs.innerHTML=LIT_CATS.map(function(c){return '<button class="dset-cat-btn'+(c.id==='all'?' active':'')+'" data-c="'+c.id+'" onclick="filterLits(\''+c.id+'\')">'+c.name+'</button>'}).join('');
+}
+function filterLits(cat){litCat=cat;litPage=0;renderLits()}
+function matchLitCat(l,cat){
+  if(cat==='all')return true;
+  if(cat==='m1'||cat==='m2'||cat==='m3')return l.cat===cat;
+  if(cat==='policy')return l.catName.indexOf('政策')>=0||l.catName.indexOf('监测')>=0||l.topic==='policy';
+  if(cat==='survey')return l.catName.indexOf('调查')>=0||l.catName.indexOf('队列')>=0||l.topic==='cohort';
+  return false;
+}
+function escLit(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function litShort(ref,max){var s=(ref||'').trim();return s.length>max?s.slice(0,max)+'…':s}
+function renderLits(){
+  initLitTabs();
+  document.querySelectorAll('#lit-tabs .dset-cat-btn').forEach(function(b){b.classList.toggle('active', b.dataset.c===litCat)});
+  var all=window.KNOWN_LITERATURE||[];
+  var filtered=all.filter(function(l){return matchLitCat(l,litCat)});
+  var start=litPage*litPageSize,list=filtered.slice(start,start+litPageSize);
+  var grid=document.getElementById('lit-grid');
+  if(!grid)return;
+  if(list.length===0){grid.innerHTML='<div class="empty-tip" style="grid-column:1/-1">此分类下暂无文献</div>';}
+  else{
+    grid.innerHTML=list.map(function(l){
+      var tagClass=l.cat==='m1'?'ok':(l.cat==='m3'?'warn':'grey');
+      var doiLink=l.doi?('<a href="https://doi.org/'+encodeURIComponent(l.doi)+'" target="_blank" onclick="event.stopPropagation()">'+escLit(l.doi)+'</a>'):'<span style="color:var(--muted)">无</span>';
+      var srcLine=(l.src||'')+ (l.src&&l.dsetTitle?' · ':'') + (l.dsetTitle?('关联：'+escLit(l.dsetTitle)):'');
+      var absSnippet='';
+      var refText=(l.ref||'').trim();
+      // ref 通常包含作者+标题+期刊，若长度超过 140 说明含摘要信息，截取 140 字展示
+      if(refText.length>140){
+        var snippet=refText.slice(refText.indexOf(' ', refText.indexOf('.')+4)>=0?Math.min(refText.indexOf(' ', refText.indexOf('.')+4)+1,80):80, 80+160);
+        absSnippet='<p style="font-size:12px;color:var(--ink2);margin:4px 0 8px;line-height:1.6;background:#f9fbfd;padding:4px 8px;border-left:3px solid var(--accent);border-radius:0 3px 3px 0">📄 '+escLit(refText.length>150?refText.slice(80,240)+'…':refText)+'</p>';
+      }
+      return '<div class="dset-card" style="cursor:pointer" onclick="openLit('+l._idx+')"><div style="display:flex;justify-content:space-between;align-items:flex-start"><h4 style="font-size:13.5px;line-height:1.4">'+escLit(litShort(l.ref,110))+'</h4><span class="chip '+tagClass+'">'+escLit(l.catName)+'</span></div>'+absSnippet+'<p style="font-size:12px;color:var(--muted);margin:6px 0">'+escLit(srcLine)+'</p><div class="dc-foot"><span>DOI</span><span>'+doiLink+'</span></div></div>';
+    }).join('');
+  }
+  var total=Math.ceil(filtered.length/litPageSize),pg=document.getElementById('lit-pager');
+  if(pg){pg.innerHTML='';if(total>1){for(var i=0;i<total;i++){var b=document.createElement('button');b.textContent=i+1;b.className='dset-cat-btn'+(i===litPage?' active':'');b.onclick=(function(p){return function(){litPage=p;renderLits()}})(i);pg.appendChild(b)}}}
+  var cnt=document.getElementById('lit-count');
+  if(cnt)cnt.textContent='共 '+filtered.length+' 条文献 · 当前第'+(litPage+1)+'/'+Math.max(1,total)+' 页';
+}
+function openLit(idx){
+  var l=(window.KNOWN_LITERATURE||[]).find(function(x){return x._idx===idx});
+  if(!l)return;
+  var c=document.getElementById('lit-modal');
+  if(!c)return;
+  var doiLink=l.doi?('<a href="https://doi.org/'+encodeURIComponent(l.doi)+'" target="_blank">'+escLit(l.doi)+'</a>'):'<span style="color:var(--muted)">未提供</span>';
+  var html='<button class="close-btn" onclick="document.getElementById(\'lit-modal-bg\').style.display=\'none\'">×</button>';
+  html+='<h3 style="font-size:16px;line-height:1.5">📄 文献详情</h3>';
+  html+='<h4 style="margin-top:12px">完整引文 / 摘要信息</h4><div style="font-size:13px;line-height:1.8;background:#f9fbfd;padding:10px 12px;border-left:3px solid var(--accent);border-radius:0 3px 3px 0">'+escLit(l.ref)+'</div>';
+  // Try to produce structured Chinese research summary from ref string
+  if(typeof makeStructuredAbstract==='function'){
+    // extract best-effort title from ref: take first sentence
+    var titleGuess=(l.ref||'').split(/[.!?]/).slice(0,2).join('. ');
+    var pseudoPaper={title:titleGuess, abstract:(l.ref||'').length>140?(l.ref):''};
+    var s=makeStructuredAbstract(pseudoPaper);
+    if(s){
+      html+='<h4 style="margin-top:14px">🧠 智能体解读（基于引文结构化提取）</h4>';
+      html+='<table style="font-size:13px"><tr><th>研究对象</th><td>'+escLit(s.population)+'</td></tr>';
+      html+='<tr><th>方法学</th><td>'+escLit(s.method)+'</td></tr>';
+      html+='<tr><th>样本量</th><td>'+escLit(s.sample)+'</td></tr>';
+      html+='<tr><th>核心发现 / 结论</th><td>'+escLit(s.finding)+'</td></tr></table>';
+    }
+  }
+  html+='<h4 style="margin-top:14px">DOI</h4><div style="font-size:13px">'+doiLink+'</div>';
+  html+='<h4 style="margin-top:14px">来源标签</h4><table><tr><th>来源</th><td>'+escLit(l.src||'未标注')+'</td></tr>';
+  html+='<tr><th>关联数据集</th><td>'+escLit(l.dsetTitle||'')+(l.dsetEn?(' ('+escLit(l.dsetEn)+')'):'')+'</td></tr>';
+  html+='<tr><th>数据集分类</th><td>'+escLit(l.catName)+'</td></tr>';
+  html+='<tr><th>主题词</th><td>'+escLit(l.topic)+'</td></tr></table>';
+  html+='<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">';
+  if(l.doi) html+='<button class="btn sm" onclick="window.open(\'https://doi.org/'+encodeURIComponent(l.doi)+'\',\'_blank\')">↗ 跳转 DOI 原文</button>';
+  if(l.dsetId) html+='<button class="btn sm" onclick="document.getElementById(\'lit-modal-bg\').style.display=\'none\';openDset(\''+l.dsetId+'\')">查看关联数据集 →</button>';
+  html+='<button class="btn sm" data-title="'+escLit(litShort(l.ref,120)).replace(/"/g,'&quot;')+'" data-type="paper" data-source="'+escLit(l.src||'已收录').replace(/"/g,'&quot;')+'" data-year="" data-url="'+(l.doi?('https://doi.org/'+encodeURIComponent(l.doi)):'')+'" data-doi="'+escLit(l.doi||'').replace(/"/g,'&quot;')+'" onclick="libAddPaper(this)">⭐ 加入收藏</button>';
+  html+='</div>';
+  c.innerHTML=html;
+  document.getElementById('lit-modal-bg').style.display='flex';
+}
+document.getElementById('lit-modal-bg').addEventListener('click',function(e){if(e.target.id==='lit-modal-bg')this.style.display='none'});
+/* init everything after all scripts loaded */
+(function(){
+  // assign _idx for lookup
+  (window.KNOWN_LITERATURE||[]).forEach(function(l,i){l._idx=i;});
+  var gate=document.getElementById('pw-gate');
+  var loggedIn=gate?gate.classList.contains('hidden'):true;
+  if(loggedIn){
+    // already authenticated
+    if(typeof init==='function') init();
+    renderDsets();
+    initDatasetTabs();
+    renderLits();
+    initLitTabs();
+    try{initHealthHub();}catch(e){console.warn('initHealthHub fail:',e);}
+  }
+  // hook for post-auth
+  window._onAuthSuccess=function(){
+    if(typeof init==='function') init();
+    renderDsets();
+    initDatasetTabs();
+    renderLits();
+    initLitTabs();
+    try{initHealthHub();}catch(e){console.warn('initHealthHub fail:',e);}
+  };
+})();
+
 </script>
 
 
