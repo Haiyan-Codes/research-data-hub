@@ -8038,7 +8038,7 @@ function hGlobalHint(g, extra){
   // 生成"网盘中定位提示"：3.卫生健康统计年鉴 → 2023 年 → [中国卫生健康统计年鉴2023EXCEL/ 章节 7-9-8 xxx.xls]
   var parts=[esc(g.cat_cn)+'（'+esc(g.cat_key)+'）',esc(g.year)+' 年'];
   if(extra) parts.push(esc(extra));
-  return '🎯 网盘中定位：<b>'+parts.join(' → ')+'</b>'+;
+  return '🎯 网盘中定位：<b>'+parts.join(' → ')+'</b>';
 }
 function hIsGroupLinked(g){
   var l=H_LINKS[g.group_id]||{};
