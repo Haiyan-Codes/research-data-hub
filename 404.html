@@ -4644,13 +4644,9 @@ else:
 
   <!-- ========== 子TAB 1: 智能检索 ========== -->
   <div id="h-tab-search">
-    <!-- 下载方式切换 -->
-    <div class="toolbar" style="flex-wrap:wrap;margin-bottom:10px;background:rgba(15,23,42,.02);border:1px solid var(--border);border-radius:10px;padding:8px 12px">
-      <span style="color:#1e293b;font-weight:600">⬇️ 下载方式：</span>
-      <button class="btn sm" id="h-mode-pan" onclick="hSetMode('pan')">🟢 百度网盘（默认）</button>
-      <button class="btn sm" id="h-mode-gh" onclick="hSetMode('github')">🔒 GitHub加密直下（推荐，秒速）</button>
-      <button class="btn sm teal" id="h-mode-both" onclick="hSetMode('both')">🔀 双模式并排</button>
-      <span id="h-mode-info" style="margin-left:auto;color:var(--muted);font-size:13px">当前：🟢 百度网盘模式 · 如需极速，请切到 🔒 GitHub 模式</span>
+    <!-- 下载说明（已简化为单百度网盘） -->
+    <div style="margin-bottom:10px;background:linear-gradient(135deg,#f0fdf4,#ecfeff);border:1px solid #86efac;border-radius:10px;padding:10px 16px;font-size:13.5px;color:#065f46;line-height:1.7">
+      📦 全部 4 类年鉴数据已整理为 4 个百度网盘分享，每类一个整包（含 Excel + PDF）。<b>检索到匹配表格后，下载按钮会自动跳转到对应分类的网盘链接</b>，提取码 <span style="font-family:monospace;background:#fff;padding:1px 6px;border-radius:3px;border:1px solid #86efac">ment</span>。
     </div>
     <div class="toolbar" style="flex-wrap:wrap">
       <input class="input wide" id="h-q" placeholder="输入关键词，例如：床位数、执业医师、诊疗人次、卫生总费用、妇幼保健、中医医院…（支持中英文，空格分隔多关键词 AND）" onkeydown="if(event.key==='Enter')hDoSearch()">
@@ -8075,8 +8071,21 @@ document.getElementById('lit-modal-bg').addEventListener('click',function(e){if(
 /* ==================== 🏥 卫生健康数据智能库 ==================== */
 var H_ADMIN_PASS='haiyan-health-2026';
 var HEALTH_INDEX=null;
-var H_LINKS={};   // {group_id:{year_folder,year_excels,year_pdfs, excels:{fname:url}, pdfs:{fname:url}}}
-var H_GLOBAL={url:'', pwd:'', enable:true, force:false};   // 全局总链接
+/* === 4 类数据百度网盘分享（固定链接） === */
+var H_CAT_PANS={
+  '1.教育经费统计年鉴':    {url:'https://pan.baidu.com/s/1BedDI7INVKq1BvyWjqR-Pg', pwd:'ment', color:'#f59e0b'},
+  '2.卫生和计划生育统计年鉴':{url:'https://pan.baidu.com/s/1XT0ToiQFumUJKKBQUvzWSQ', pwd:'ment', color:'#0ea5e9'},
+  '3.卫生健康统计年鉴':    {url:'https://pan.baidu.com/s/1-_cjpSwbJ1F327KB_QytDg', pwd:'ment', color:'#10b981'},
+  '4.卫生统计年鉴':        {url:'https://pan.baidu.com/s/14vCLACtRFYGQTlY_TGiD3g', pwd:'ment', color:'#8b5cf6'},
+};
+var H_CAT_DESC={
+  '1.教育经费统计年鉴':    {cn:'教育经费',   yr:'2021',         e:348,  p:4,  desc:'收录 2021 年度全国及各省级教育经费收入与支出明细，涵盖财政性教育经费、事业收入、捐赠收入等构成，以及各级各类教育机构（普通本科/高职/中等职业/基础教育/民办）的经费收支情况。适合教育财政、政府投入绩效、教育公平等研究。', topics:['教育经费总收入','各级各类教育经费支出明细','中央与地方教育经费','民办/公办经费比较','生均教育经费']},
+  '2.卫生和计划生育统计年鉴':{cn:'卫生和计划生育',yr:'2003—2017（15年）',e:4180, p:28, desc:'原卫生部主办，覆盖 2003—2017 共 15 个年度的卫生事业统计，是我国卫生统计的核心长序列数据。含卫生机构数、床位数、卫生人员、诊疗人次、医疗费用、卫生总费用、妇幼健康、疾病防控、计划生育等板块。适合卫生资源配置公平性、医疗服务利用、卫生筹资、健康公平等研究，是 DID/面板固定效应等方法的理想面板数据源。', topics:['卫生机构数','床位数','卫生技术人员','诊疗人次','卫生总费用','医疗费用','妇幼健康','计划生育']},
+  '3.卫生健康统计年鉴':    {cn:'卫生健康',   yr:'2018—2023（6年）',  e:2990, p:12, desc:'国家卫生健康委员会主办，2018 年起更名。延续卫生统计传统栏目并新增健康中国、医联体、分级诊疗、DRG/DIP、互联网+医疗健康等新指标。含甲乙类传染病发病率死亡率、慢性病患病率（高血压/糖尿病）、恶性肿瘤死亡率、居民健康素养水平、医疗保障等。适合疫情前后比较、医改政策评估、疾病负担测算、健康素养研究。', topics:['传染病发病率死亡率','慢性病患病率','恶性肿瘤死亡率','居民健康素养','DRG/DIP 改革','互联网+医疗健康','医联体与分级诊疗']},
+  '4.卫生统计年鉴':        {cn:'卫生统计',   yr:'2011',          e:0,   p:1,  desc:'早期版本 PDF 索引目录，可作为早期年鉴的参考资料。', topics:['目录索引']},
+};
+var H_LINKS={};   // 保留兼容，实际已不再依赖
+var H_GLOBAL={url:'', pwd:'', enable:false, force:false};   // 不再使用全局链接
 var H_INIT=false;
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 /* 读取/写入全局链接配置（DOM <-> H_GLOBAL） */
@@ -8344,89 +8353,54 @@ function hDoSearch(){
 
   var html='';
   if(scoredGroups.length===0){
-    html='<div class="empty-tip" style="grid-column:1/-1">'+(q?'未匹配到结果，试试换关键词或去掉【仅显示已填链接】筛选。':'当前筛选条件下无数据。')+'</div>';
+    html='<div class="empty-tip" style="grid-column:1/-1">'+(q?'未匹配到结果，试试换关键词。':'当前筛选条件下无数据。')+'</div>';
   } else {
     scoredGroups.forEach(function(r,gi){
       var g=r.g;
-      var catChip='<span class="chip '+(g.cat_key.indexOf('教育')>=0?'warn':(g.cat_key.indexOf('计划生育')>=0?'ok':'teal'))+'">'+esc(g.cat_cn)+'</span>';
-      var linkedChip=r.lkd?'<span class="chip ok">✅ 已配置链接</span>':'<span class="chip grey">⚠️ 未配置下载链接</span>';
+      var catKey=g.cat_key||'';
+      var catDesc=H_CAT_DESC[catKey]||{cn:'未知',yr:'',e:g.excel_count,p:g.pdf_count,desc:'',topics:[]};
+      var pan=H_CAT_PANS[catKey]||{url:'#',pwd:'ment',color:'#64748b'};
       html+='<div class="dset-card" style="cursor:initial">';
+      // 卡片头部
       html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">';
-      html+='<div style="flex:1;min-width:220px"><h3 style="margin:0 0 6px;font-size:16px">'+esc(g.year)+'年</h3><div style="margin:4px 0 8px">'+catChip+' '+linkedChip+(r.gs&&q?' <span class="chip grey">相关性 '+r.gs+'</span>':'')+'</div>';
-      html+='<div style="color:var(--muted);font-size:13px">💾 '+g.excel_count+' 张表格 · 📄 '+g.pdf_count+' 本PDF</div></div>';
-      // 主下载按钮（GitHub加密 + 百度网盘双模式）
-      var usedGlobalFolder=hUsedGlobal(r.urls, !!(r.urls._hasGroupNative));
-      var ghGroupInfo = hGhGroupInfo(g);
-      html+='<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">';
-      // GitHub 加密按钮（优先）
-      if(h_mode==='github' || h_mode==='both'){
-        if(ghGroupInfo.hasAny){
-          html+='<button class="btn sm" style="background:#0ea5e9;border-color:#0284c7;color:#fff" onclick="hGhDownloadGroup(\''+g.gid+'\')" title="从 GitHub CDN 下载，客户端解密，秒速，不需提取码">🔒 GitHub整组秒下</button>';
-          if(ghGroupInfo.groupZip){
-            html+='<button class="btn sm" style="background:#1e3a8a;border-color:#1e40af;color:#fff" onclick="hGhDownload(\''+g.gid+'\',\'zip\')" title="整年度 Excel 打包 zip.enc → 解密下载原始 zip">📦 整年度ExcelZip</button>';
-          }
-        } else {
-          html+='<button class="btn sm" disabled title="该组未在 GitHub 数据清单中（可能尚未运行 step2/step3 或清单未加载）">🔒 GitHub 未就绪</button>';
-        }
-      }
-      if(h_mode==='pan' || h_mode==='both'){
-        if(r.urls.year_folder) html+='<a class="btn primary sm" href="'+esc(r.urls.year_folder)+'" target="_blank" rel="noopener">🟢 百度网盘·整包</a>';
-        else html+='<button class="btn sm" disabled title="先在【链接录入】面板粘贴【🌐 全局总链接】，一步搞定所有数据下载">🟢 整包(未填)</button>';
-        if(r.urls.year_excels && r.urls.year_excels!==r.urls.year_folder) html+='<a class="btn sm" href="'+esc(r.urls.year_excels)+'" target="_blank" rel="noopener">📊 Excel文件夹</a>';
-        if(r.urls.year_pdfs && r.urls.year_pdfs!==r.urls.year_folder) html+='<a class="btn sm" href="'+esc(r.urls.year_pdfs)+'" target="_blank" rel="noopener">📚 PDF文件夹</a>';
-      }
+      html+='<div style="flex:1;min-width:220px">';
+      html+='<h3 style="margin:0 0 4px;font-size:16px">'+esc(g.year)+' 年 · '+esc(g.cat_cn)+'</h3>';
+      html+='<div style="margin:4px 0 6px">';
+      html+='<span class="chip" style="background:'+pan.color+'15;color:'+pan.color+';border-color:'+pan.color+'40">'+esc(catDesc.cn)+'</span>';
+      if(r.gs&&q) html+=' <span class="chip ok">匹配 '+r.gs+'</span>';
+      html+='</div>';
+      html+='<div style="color:var(--muted);font-size:13px">📊 '+g.excel_count+' 张表格 · 📄 '+g.pdf_count+' 本PDF</div>';
+      html+='</div>';
+      // 下载按钮（固定指向分类级百度网盘链接）
+      html+='<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">';
+      html+='<a class="btn primary sm" href="'+esc(pan.url)+'" target="_blank" rel="noopener" style="background:'+pan.color+';border-color:'+pan.color+'">🟢 百度网盘下载 →</a>';
+      html+='<span style="font-size:11.5px;color:var(--muted)">提取码：<span style="font-family:monospace;background:#f1f5f9;padding:0 5px;border-radius:2px">'+esc(pan.pwd)+'</span></span>';
       html+='</div></div>';
-      // 全局链接定位提示（卡片级）
-      if(usedGlobalFolder && H_GLOBAL.url){
-        html+='<div style="margin-top:10px;padding:8px 12px;background:#fffbeb;border:1px dashed #f59e0b;border-radius:8px;font-size:12.5px;color:#92400e;line-height:1.6">'+hGlobalHint(g, '整个年份组')+'</div>';
-      }
-      if(ghGroupInfo.skippedPdfCount){
-        html+='<div style="margin-top:8px;padding:6px 10px;background:#eff6ff;border:1px dashed #3b82f6;border-radius:6px;font-size:12.5px;color:#1e40af">ℹ️ 该组有 <b>'+ghGroupInfo.skippedPdfCount+'</b> 本大扫描版PDF（≥80MB）走【百度网盘】兜底，GitHub仅提供目录/可复制版小PDF。</div>';
-      }
 
       // PDF 列表
       if(g.pdfs&&g.pdfs.length){
-        html+='<div style="margin-top:12px"><div style="font-size:13px;color:var(--muted);margin-bottom:4px">📄 PDF 文档：</div><div style="display:flex;flex-direction:column;gap:4px">';
-        r.pScores.slice(0,20).forEach(function(x){
+        html+='<div style="margin-top:12px"><div style="font-size:13px;color:var(--muted);margin-bottom:4px">📄 PDF 文档（'+g.pdf_count+' 本，含扫描版）：</div><div style="display:flex;flex-direction:column;gap:4px">';
+        r.pScores.slice(0,10).forEach(function(x){
           var hit=q?x.s>0:true;
           var badge=x.p.type==='目录'?'📋':(x.p.type==='扫描版'?'📸':'📑');
-          var directPdfUrl=((r.urls.pdfs||{})[x.p.fname]||x.p.share_url||'');
-          var useGlobalForPdf=x.url && !directPdfUrl && H_GLOBAL.enable;
-          var btnStyle=useGlobalForPdf?' style="background:#f59e0b;border-color:#d97706;color:#fff"':'';
-          var panBtn=x.url?('<a class="btn xs"'+btnStyle+' href="'+esc(x.url)+'" target="_blank" rel="noopener">百度下载</a>'):'<button class="btn xs" disabled>未配置</button>';
-          // GitHub 加密按钮
-          var ghRel = hGhRelForPdf(g, x.p.fname);
-          var ghBtn;
-          if(ghRel) ghBtn='<button class="btn xs" style="background:#0ea5e9;border-color:#0284c7;color:#fff" onclick="hGhDownloadRel(\''+ghRel+'\',\''+escQ(x.p.fname)+'\')">🔒 直下解密</button>';
-          else ghBtn='<button class="btn xs" disabled title="大PDF，GitHub模式下走百度网盘兜底">大PDF · 仅百度</button>';
-
-          var twoBtns=(h_mode==='pan'?panBtn:(h_mode==='github'?ghBtn:(ghBtn+' '+panBtn)));
-          var extraHint=useGlobalForPdf?('<div style="font-size:11.5px;color:#b45309;margin-top:2px">'+hGlobalHint(g, 'PDF / '+x.p.type+' / '+x.p.fname)+'</div>'):'';
-          html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:6px;background:'+(hit&&q?'rgba(22,163,174,.08)':'rgba(250,250,250,1)')+'"><div style="flex:1"><div style="font-size:13px;'+(hit&&q?'color:#0e7490':'')+'">'+badge+' <b>'+esc(x.p.type)+'</b> · '+esc(x.p.fname)+(q&&hit?' <span class="chip ok">匹配 '+x.s+'</span>':'')+'</div>'+extraHint+'</div>'+twoBtns+'</div>';
+          html+='<div style="display:flex;align-items:flex-start;gap:6px;padding:4px 8px;border-radius:6px;background:'+(hit&&q?'rgba(22,163,174,.08)':'rgba(250,250,250,1)')+'">';
+          html+='<span>'+badge+'</span><span style="flex:1;font-size:13px;'+(hit&&q?'color:#0e7490;font-weight:500':'')+'">'+esc(x.p.type)+' · '+esc(x.p.fname)+(q&&hit?' <span class="chip ok" style="font-size:11px">匹配</span>':'')+'</span>';
+          html+='</div>';
         });
+        html+='<div style="font-size:11.5px;color:var(--muted);margin-top:2px">完整 PDF 列表已包含在上方百度网盘整包内。</div>';
         html+='</div></div>';
       }
 
-      // Excel 匹配表（Top 15 + 展开）
+      // Excel 匹配表（Top 10 + 展开）
       if(r.eScores.length){
-        var shown=r.eScores.slice(0,15);
-        var more=r.eScores.slice(15);
+        var shown=r.eScores.slice(0,10);
+        var more=r.eScores.slice(10);
         html+='<div style="margin-top:12px"><div style="font-size:13px;color:var(--muted);margin-bottom:4px">📊 匹配的表格（'+r.eScores.length+' 张）：</div>';
         html+='<div id="h-e-'+gi+'-top">';
         var renderExcelRow=function(x){
-          var u=x.url;
-          var directExcelUrl=((r.urls.excels||{})[x.e.fname]||x.e.share_url||'');
-          var useGlobalForXls=u && !directExcelUrl && H_GLOBAL.enable;
-          var btnStyle=useGlobalForXls?' style="background:#f59e0b;border-color:#d97706;color:#fff"':'';
-          var panBtn=u?('<a class="btn xs teal"'+btnStyle+' href="'+esc(u)+'" target="_blank" rel="noopener">百度表格</a>'):'<button class="btn xs" disabled title="可在【链接录入】→【🌐 全局总链接】里填一个链接即可为全部表格启用下载">未配置</button>';
-          var ghRel = hGhRelForExcel(g, x.e.fname);
-          var ghBtn = ghRel
-            ? '<button class="btn xs" style="background:#0ea5e9;border-color:#0284c7;color:#fff" onclick="hGhDownloadRel(\''+ghRel+'\',\''+escQ(x.e.fname)+'\')">🔒 秒下解密</button>'
-            : '<button class="btn xs" disabled title="该表未纳入 GitHub（清单未加载）">未就绪</button>';
-          var twoBtns=(h_mode==='pan'?panBtn:(h_mode==='github'?ghBtn:(ghBtn+' '+panBtn)));
-          var xlsHint=useGlobalForXls?('<div style="font-size:11.5px;color:#b45309;margin-top:3px">'+hGlobalHint(g, 'Excel / 章节 '+(x.e.chapter||'-')+' / '+x.e.fname)+'</div>'):'';
-          var row='<div style="padding:6px 8px;margin-bottom:5px;border-radius:6px;background:rgba(245,243,255,1);border-left:3px solid var(--accent)">';
-          row+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="flex:1"><div style="font-size:12.5px;color:var(--muted);margin-bottom:2px">'+(x.e.chapter?('章节 <b>'+esc(x.e.chapter)+'</b> · '):'')+'文件名：'+esc(x.e.fname)+(q?' <span class="chip ok">匹配 '+x.s+'</span>':'')+'</div><div style="font-size:13.5px"><b>'+hHighlight(x.e.title, toks)+'</b></div>'+xlsHint+'</div>'+twoBtns+'</div>';
+          var row='<div style="padding:5px 8px;margin-bottom:4px;border-radius:6px;background:rgba(245,243,255,1);border-left:3px solid var(--accent)">';
+          row+='<div style="font-size:12px;color:var(--muted);margin-bottom:1px">'+(x.e.chapter?('章节 <b>'+esc(x.e.chapter)+'</b> · '):'')+esc(x.e.fname)+(q?' <span class="chip ok" style="font-size:11px">匹配 '+x.s+'</span>':'')+'</div>';
+          row+='<div style="font-size:13.5px"><b>'+hHighlight(x.e.title, toks)+'</b></div>';
           row+='</div>';
           return row;
         };
@@ -8436,7 +8410,7 @@ function hDoSearch(){
           html+='<div id="h-e-'+gi+'-more" style="display:none">';
           more.forEach(function(x){ html+=renderExcelRow(x); });
           html+='</div>';
-          html+='<a style="color:var(--accent);font-size:13px;cursor:pointer" id="h-e-'+gi+'-more-btn" onclick="var m=document.getElementById(\'h-e-'+gi+'-more\');var b=document.getElementById(\'h-e-'+gi+'-more-btn\');if(m.style.display===\'none\'){m.style.display=\'block\';b.textContent=\'▲ 收起剩余 '+more.length+' 张\'}else{m.style.display=\'none\';b.textContent=\'▼ 展开剩余 '+more.length+' 张\'}">▼ 展开剩余 '+more.length+' 张</a>';
+          html+='<a style="color:var(--accent);font-size:13px;cursor:pointer" onclick="var m=document.getElementById(\'h-e-'+gi+'-more\');var b=document.getElementById(\'h-e-'+gi+'-more-btn\');if(m.style.display===\'none\'){m.style.display=\'block\';b.textContent=\'▲ 收起剩余 '+more.length+' 张\'}else{m.style.display=\'none\';b.textContent=\'▼ 展开剩余 '+more.length+' 张\'}" id="h-e-'+gi+'-more-btn">▼ 展开剩余 '+more.length+' 张</a>';
         }
         html+='</div>';
       } else if(q) {
@@ -8467,53 +8441,62 @@ function hHighlight(text, toks){
   return s;
 }
 
-/* ========== 空引导页（不再一次性显示全部7518张表） ========== */
+/* ========== 空引导页：4 类数据卡片 + 真实描述 + 百度网盘 ========== */
 function hEmptyWelcomeHTML(){
-  var idx=HEALTH_INDEX||{}; var meta=idx.meta||{}; var cats=idx.categories||[];
+  var idx=HEALTH_INDEX||{}; var meta=idx.meta||{};
   var groups=idx.groups||[];
-  var years=[].concat.apply([],groups.map(function(g){return g.year&&g.year!=='未知'?[+g.year]:[];})).sort();
+  var years=[].concat.apply([],groups.map(function(g){return +g.year||null;})).filter(function(y){return y&&y>1990&&y<2030;}).sort();
   var yMin=years.length?years[0]:'-'; var yMax=years.length?years[years.length-1]:'-';
-  var yRange=(yMin===yMax)?yMin:(yMin+'-'+yMax);
-  var html='<div style="max-width:1080px;margin:0 auto">';
+  var cats=(idx.categories||[]).map(function(c){return c.key;}).filter(function(k){return H_CAT_PANS[k];});
+  var html='<div style="max-width:1200px;margin:0 auto">';
   // Hero
-  html+='<div style="background:linear-gradient(135deg,#0ea5e9,#7c3aed);color:#fff;padding:28px 32px;border-radius:16px;margin-bottom:20px;box-shadow:0 10px 30px rgba(14,165,233,.2)">';
-  html+='<h2 style="margin:0 0 6px;font-size:24px">🏥 卫生健康数据智能库 · 7518 张年鉴表已就绪</h2>';
-  html+='<p style="margin:0;opacity:.94;line-height:1.7;font-size:14.5px">覆盖 <b>'+cats.length+'</b> 大分类 · 共 <b>'+(meta.total_groups||0)+'</b> 个年份组（'+yRange+'）· <b>'+(meta.total_excels||0)+'</b> 张 Excel 表格 · <b>'+(meta.total_pdfs||0)+'</b> 本 PDF 说明文档。<br>请在上方输入关键词或点击下方推荐标签，系统仅返回<strong style="color:#fef08a">与检索相关</strong>的数据集，不再一次性展示全部内容。</p>';
+  html+='<div style="background:linear-gradient(135deg,#0ea5e9,#7c3aed);color:#fff;padding:28px 32px;border-radius:16px;margin-bottom:22px;box-shadow:0 10px 30px rgba(14,165,233,.2)">';
+  html+='<h2 style="margin:0 0 6px;font-size:24px">🏥 卫生健康数据智能库</h2>';
+  html+='<p style="margin:0;opacity:.94;line-height:1.7;font-size:14.5px">覆盖 <b>'+cats.length+'</b> 大分类 · <b>'+(meta.total_excels||0)+'</b> 张 Excel 表格 · <b>'+(meta.total_pdfs||0)+'</b> 本 PDF 说明文档 · 时间跨度 <b>'+yMin+'—'+yMax+'</b><br>请在上方输入关键词，系统仅返回<strong style="color:#fef08a">与检索相关</strong>的数据集；也可以直接点击下方分类卡片进入对应整包下载。</p>';
   html+='<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">';
   html+='<button class="btn sm" onclick="hQuick(\'床位数 病床使用率\')" style="background:#fff;color:#1e40af;border-color:#fff">🛏️ 医疗资源（床位/人力）</button>';
   html+='<button class="btn sm" onclick="hQuick(\'诊疗人次 门诊 住院\')" style="background:#fff;color:#1e40af;border-color:#fff">🏥 医疗服务利用</button>';
   html+='<button class="btn sm" onclick="hQuick(\'卫生总费用 医疗费用\')" style="background:#fff;color:#1e40af;border-color:#fff">💰 卫生经费与费用</button>';
-  html+='<button class="btn sm" onclick="hQuick(\'孕产妇死亡率 儿童死亡率 妇幼\')" style="background:#fff;color:#1e40af;border-color:#fff">👩‍👧 妇幼与健康结果</button>';
+  html+='<button class="btn sm" onclick="hQuick(\'孕产妇死亡率 儿童死亡率\')" style="background:#fff;color:#1e40af;border-color:#fff">👩‍👧 妇幼与健康结果</button>';
   html+='<button class="btn sm" onclick="hShowResearchSuggestions()" style="background:#fef08a;color:#92400e;border-color:#fde047;font-weight:600">🤖 查看研究建议与方法</button>';
   html+='</div></div>';
-  // 数据维度卡片
-  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:20px">';
-  var dims=[
-    {k:'🏥 医疗资源',tags:['机构数','床位数','卫生人员','执业医师','护士','设备','房屋建筑面积','每千人口'],tips:'供给侧可及性与公平性研究的核心维度'},
-    {k:'💊 医疗服务',tags:['诊疗人次','门诊','住院','入院','出院','床位使用率','平均住院日','医师工作量'],tips:'服务利用、效率评估、医院运营分析'},
-    {k:'💰 卫生经费',tags:['卫生总费用','政府卫生支出','医药费用','门诊次均费用','住院次均费用','收入支出','医保'],tips:'健康经济学、筹资公平性、灾难性支出'},
-    {k:'👩‍👧 妇幼与人口',tags:['孕产妇死亡率','婴儿死亡率','预期寿命','出生率','妇幼保健','托育','人口年龄结构','性别比'],tips:'健康结果、人口结构变化、公共卫生成效'},
-    {k:'🌿 中医药',tags:['中医','中医药','中医医院','中医诊疗','中医类机构','中医人员','中医院床位数'],tips:'传统医学发展、中西医比较'},
-    {k:'🏘️ 基层医疗',tags:['基层','社区卫生服务中心','乡镇卫生院','村卫生室','基层诊疗','全科医生'],tips:'分级诊疗、基层可及性、医疗资源下沉'},
-  ];
-  dims.forEach(function(d){
-    html+='<div style="padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:#fff">';
-    html+='<div style="font-weight:600;margin-bottom:8px;font-size:15px">'+d.k+'</div>';
-    html+='<div style="margin-bottom:8px">'+d.tags.map(function(t){return '<a class="chip grey" style="margin:2px 2px;cursor:pointer" onclick="hQuick(\''+t+'\')">'+t+'</a>';}).join('')+'</div>';
-    html+='<div style="font-size:12.5px;color:var(--muted);line-height:1.6">'+d.tips+'</div></div>';
+  // 4 类数据卡片（真实统计 + 描述 + 下载）
+  html+='<h3 style="margin:0 0 14px;font-size:17px;color:#1e293b">📦 四类年鉴数据 · 直接下载整包</h3>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">';
+  cats.forEach(function(k){
+    var d=H_CAT_DESC[k]||{cn:'',yr:'',e:0,p:0,desc:'',topics:[]};
+    var pan=H_CAT_PANS[k]||{url:'#',pwd:'ment',color:'#64748b'};
+    html+='<div style="border:1px solid var(--border);border-radius:14px;background:#fff;overflow:hidden;display:flex;flex-direction:column">';
+    html+='<div style="padding:14px 18px;background:linear-gradient(135deg,'+pan.color+'15,'+pan.color+'05);border-bottom:1px solid var(--border)">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
+    html+='<div><div style="font-weight:700;font-size:15.5px;color:var(--ink)">'+esc(k)+'</div>';
+    html+='<div style="font-size:12.5px;color:'+pan.color+';margin-top:2px;font-weight:500">'+esc(d.cn)+'</div></div>';
+    html+='<span style="font-size:11.5px;color:'+pan.color+';background:'+pan.color+'18;padding:2px 8px;border-radius:10px;white-space:nowrap">'+esc(d.yr)+'</span>';
+    html+='</div></div>';
+    html+='<div style="padding:14px 18px;flex:1;display:flex;flex-direction:column;gap:12px">';
+    html+='<div style="display:flex;gap:10px;flex-wrap:wrap">';
+    if(d.e>0) html+='<span class="chip" style="background:'+pan.color+'12;color:'+pan.color+';border-color:'+pan.color+'40;font-size:12px">📊 '+d.e+' 张 Excel</span>';
+    if(d.p>0) html+='<span class="chip" style="background:#64748b12;color:#64748b;border-color:#64748b40;font-size:12px">📄 '+d.p+' 本 PDF</span>';
+    html+='</div>';
+    html+='<div style="font-size:13px;color:#475569;line-height:1.65;flex:1">'+esc(d.desc)+'</div>';
+    html+='<div style="display:flex;flex-wrap:wrap;gap:4px">';
+    (d.topics||[]).forEach(function(t){html+='<span class="chip grey" style="font-size:11.5px;padding:2px 8px">'+esc(t)+'</span>';});
+    html+='</div>';
+    html+='</div>';
+    html+='<div style="padding:12px 18px;border-top:1px solid var(--border);background:#fafafa;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">';
+    html+='<span style="font-size:12px;color:var(--muted)">提取码：<span style="font-family:monospace;background:#fff;padding:1px 6px;border-radius:3px;border:1px solid var(--border);color:var(--ink)">'+esc(pan.pwd)+'</span></span>';
+    html+='<a class="btn primary sm" href="'+esc(pan.url)+'" target="_blank" rel="noopener" style="background:'+pan.color+';border-color:'+pan.color+'">🟢 百度网盘下载 →</a>';
+    html+='</div></div>';
   });
   html+='</div>';
-  // 下载模式说明
-  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px">';
-  html+='<div style="padding:16px 18px;background:rgba(16,185,129,.06);border:1px solid #6ee7b7;border-radius:12px">';
-  html+='<div style="font-weight:600;margin-bottom:6px;font-size:15px;color:#065f46">🟢 百度网盘模式（兜底）</div>';
-  html+='<div style="font-size:13px;color:#047857;line-height:1.7">大扫描版 PDF 继续走百度网盘，在【链接录入】面板填「🌐 全局总链接」一步为所有数据启用下载。支持五级定位提示自动跳转。</div></div>';
+  // 功能区
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:20px">';
+  html+='<div style="padding:16px 18px;background:rgba(167,139,250,.08);border:1px solid #c4b5fd;border-radius:12px">';
+  html+='<div style="font-weight:600;margin-bottom:6px;font-size:15px;color:#5b21b6">🤖 研究建议智能体</div>';
+  html+='<div style="font-size:13px;color:#6d28d9;line-height:1.7">输入关键词后点击【🤖 研究建议】，系统根据匹配到的数据主题自动输出：① 推荐研究设计（Gini/DID/面板/断点回归等）② 方法学参考文献 ③ 变量搭配指南 ④ 可研究问题示例。</div></div>';
   html+='<div style="padding:16px 18px;background:rgba(14,165,233,.06);border:1px solid #7dd3fc;border-radius:12px">';
-  html+='<div style="font-weight:600;margin-bottom:6px;font-size:15px;color:#075985">🔒 GitHub 加密直下（推荐）</div>';
-  html+='<div style="font-size:13px;color:#0369a1;line-height:1.7">7518 张 Excel 已通过 AES-256-GCM 加密并托管 GitHub，走 jsDelivr 全球 CDN。客户端解密，零限速，零提取码。在管理面板填入解密密码 <span style="font-family:monospace;background:#fff;padding:1px 6px;border-radius:3px">Haiyan-HealthHub-2026!</span> 后点击【📥 加载清单并测试】即可启用。</div></div>';
-  html+='<div style="padding:16px 18px;background:rgba(167,139,250,.1);border:1px solid #c4b5fd;border-radius:12px">';
-  html+='<div style="font-weight:600;margin-bottom:6px;font-size:15px;color:#5b21b6">🤖 研究建议智能体（新增）</div>';
-  html+='<div style="font-size:13px;color:#6d28d9;line-height:1.7">输入关键词后点击【🤖 研究建议】，系统根据匹配到的数据主题自动输出：① 研究设计建议（面板/趋势/DID/断点回归）② 方法学参考文献 ③ 变量搭配指南 ④ 5条可研究问题示例。</div></div>';
+  html+='<div style="font-weight:600;margin-bottom:6px;font-size:15px;color:#075985">🔎 关键词智能检索</div>';
+  html+='<div style="font-size:13px;color:#0369a1;line-height:1.7">在顶部输入框输入关键词（支持空格分隔多关键词 AND），系统从 7518 张表中返回匹配项，按相关度排序。如未命中，可点击上方快速检索标签试试。</div></div>';
   html+='</div></div>';
   return html;
 }
